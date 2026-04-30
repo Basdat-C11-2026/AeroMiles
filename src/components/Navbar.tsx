@@ -76,17 +76,30 @@ export default function Navbar() {
                     <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-10">
                       <div className="px-4 py-2 border-b border-gray-200">
                         <p className="font-medium text-gray-900">{user.name}</p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
+                        <p className="text-xs text-gray-500 bg-gray-100 inline-block px-2 py-1 rounded mt-1 uppercase">
+                          {user.role}
+                        </p>
                       </div>
-                      <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
-                        ⭐ Profil Saya
-                      </a>
-                      <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
-                        ⚙️ Pengaturan
-                      </a>
-                      <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
-                        💰 Miles: {user.milesBalance.toLocaleString()}
-                      </a>
+
+                      {/* Tampilkan menu khusus MEMBER */}
+                      {user.role === 'member' && (
+                        <>
+                          <Link href="/manajemen-identitas" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                            🪪 Identitas Saya
+                          </Link>
+                          <div className="block px-4 py-2 text-gray-700">
+                            💰 Miles: {user.milesBalance.toLocaleString()}
+                          </div>
+                        </>
+                      )}
+
+                      {/* Tampilkan menu khusus STAF */}
+                      {user.role === 'staff' && (
+                        <Link href="/manajemen-data-member" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                          👥 Manajemen Member
+                        </Link>
+                      )}
+
                       <button
                         onClick={handleLogout}
                         className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors border-t border-gray-200"
