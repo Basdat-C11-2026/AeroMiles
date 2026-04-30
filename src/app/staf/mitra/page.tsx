@@ -96,7 +96,7 @@ export default function Page() {
                 <div className="modal-box bg-base-100 text-base-content">
 
                     <h3 className="font-bold text-lg mb-4">
-                        Tambah Hadiah
+                        Tambah Mitra
                     </h3>
 
                     <form
@@ -167,7 +167,7 @@ export default function Page() {
             <dialog className={`modal ${editOpen ? 'modal-open' : ''}`}>
                 <div className="modal-box">
 
-                    <h3 className="font-bold text-lg mb-4">Edit Hadiah</h3>
+                    <h3 className="font-bold text-lg mb-4">Edit Mitra</h3>
 
                     {selected && (
                         <form
@@ -233,7 +233,7 @@ export default function Page() {
             {/* Delete Confirmation */}
             <dialog className={`modal ${deleteOpen ? 'modal-open' : ''}`}>
                 <div className="modal-box">
-                    <h3 className="font-bold text-lg">Hapus Hadiah?</h3>
+                    <h3 className="font-bold text-lg">Hapus Mitra?</h3>
                     <p className="py-2">
                         {selected?.nama}
                     </p>
