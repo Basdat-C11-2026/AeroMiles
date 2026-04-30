@@ -35,36 +35,46 @@ export default function RegisterForm() {
     e.preventDefault();
     setError('');
 
-    // Validasi Password
-    if (password !== confirmPassword) {
-      setError('Password tidak cocok');
+    // 1. Validasi Field Kosong (General)
+    if (!email || !password || !confirmPassword) {
+      setError('Semua kredensial login wajib diisi.');
       return;
     }
 
-    // Validasi minimal berdasarkan role
+    // Validasi Field Kosong berdasarkan Role
     if (role === 'staff' && !staffName) {
-      setError('Nama lengkap staf harus diisi');
+      setError('Nama lengkap staf harus diisi.');
       return;
     }
 
     if (role === 'member') {
-      if (!firstName || !lastName || !phoneNumber || !birthDate || !nationality || !salutation) {
-        setError('Mohon lengkapi semua data profil member');
+      if (!salutation || !firstName || !lastName || !countryCode || !phoneNumber || !birthDate || !nationality) {
+        setError('Mohon lengkapi semua data profil member.');
         return;
       }
+    }
+
+    // 2. Validasi Password Match
+    if (password !== confirmPassword) {
+      setError('Password dan konfirmasi password harus sama.');
+      return;
     }
 
     setIsLoading(true);
 
     try {
-      // Menggabungkan nama untuk fungsi register (sementara)
       const fullName = role === 'staff' ? staffName : `${firstName} ${lastName}`.trim();
       
-      // Pada implementasi backend nyata, data member lengkap harus dikirim
+      // Memanggil fungsi register (akan mengecek duplikasi email di dalam context)
       await register(fullName, email, password);
-      router.push('/');
+      
+      // 3. Jika sukses, beri tahu user dan arahkan ke halaman login
+      alert('Registrasi berhasil! Silakan login dengan akun baru Anda.');
+      router.push('/login');
+      
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal mendaftar');
+      // Menangkap pesan error dari AuthContext (misal: "Email sudah terdaftar")
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan sistem saat mendaftar.');
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +82,7 @@ export default function RegisterForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-2xl"> {/* Diperlebar untuk menampung form yang lebih banyak */}
+      <div className="w-full max-w-2xl">
         <div className="bg-white rounded-xl shadow-lg p-8 space-y-6">
           
           <div className="text-center">
@@ -83,6 +93,7 @@ export default function RegisterForm() {
             <p className="text-gray-600 mt-2">Buat akun baru Anda</p>
           </div>
 
+          {/* Menampilkan Pesan Error */}
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-700">{error}</p>
@@ -90,8 +101,8 @@ export default function RegisterForm() {
           )}
 
           {/* Role Selection */}
-          <div className="flex justify-center gap-4 mb-6">
-            <label className={`cursor-pointer px-6 py-3 rounded-lg border-2 font-medium transition-all ${role === 'member' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
+            <label className={`cursor-pointer px-6 py-3 rounded-lg border-2 font-medium transition-all text-center flex-1 ${role === 'member' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
               <input 
                 type="radio" 
                 name="role" 
@@ -102,7 +113,7 @@ export default function RegisterForm() {
               />
               👥 Saya Ingin Jadi Member
             </label>
-            <label className={`cursor-pointer px-6 py-3 rounded-lg border-2 font-medium transition-all ${role === 'staff' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+            <label className={`cursor-pointer px-6 py-3 rounded-lg border-2 font-medium transition-all text-center flex-1 ${role === 'staff' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
               <input 
                 type="radio" 
                 name="role" 
@@ -111,7 +122,6 @@ export default function RegisterForm() {
                 checked={role === 'staff'}
                 onChange={() => {
                   setRole('staff');
-                  // Set email ke domain aeromiles secara otomatis untuk staf
                   if(!email.includes('@')) setEmail('@aeromiles.com');
                 }}
               />
@@ -201,7 +211,7 @@ export default function RegisterForm() {
                         type="text"
                         value={countryCode}
                         onChange={(e) => setCountryCode(e.target.value)}
-                        className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-black focus:ring-2 focus:ring-blue-500 outline-none text-center"
                         placeholder="+62"
                       />
                       <input
