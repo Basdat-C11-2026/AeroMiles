@@ -14,15 +14,13 @@ export default function Dashboard() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto">
-                {/* Welcome Section */}
+            <div className="max-w-7xl mx-auto text-gray-900">
                 <div className="mb-8">
                     <h1 className="text-3xl sm:text-4xl font-bold mb-2">
                         Kelola Hadiah & Penyedia
                     </h1>
                 </div>
 
-                {/* Recent Transactions */}
                 <div className="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
                     <table className="table bg-white rounded-lg shadow-md p-6">
                         <thead>
