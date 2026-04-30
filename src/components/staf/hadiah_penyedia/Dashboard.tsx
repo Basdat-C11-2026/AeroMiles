@@ -8,16 +8,16 @@ export default function Dashboard() {
         name: 'John Doe',
         milesBalance: 245850,
     };
-    const data = [
+    const [data, setData] = useState([
         { kode: 'RWD-001', nama: 'Tiket Domestik PP', deskripsi: '...', penyedia: 'Garuda Indonesia', miles: 15000, periode: '2024-01-01 — 2025-12-31' },
         { kode: 'RWD-002', nama: 'Upgrade ke Business Class', deskripsi: '...', penyedia: 'Garuda Indonesia', miles: 25000, periode: '2024-01-01 — 2025-12-31' },
         { kode: 'RWD-003', nama: 'Voucher Hotel Rp 500.000', deskripsi: '...', penyedia: 'TravelokaPartner', miles: 8000, periode: '2024-06-01 — 2025-06-30' },
         { kode: 'RWD-004', nama: 'Akses Lounge 1x', deskripsi: '...', penyedia: 'Plaza Premium', miles: 3000, periode: '2024-01-01 — 2025-12-31' },
-    ];
+    ]);
 
     const penyediaList = ['Garuda Indonesia', 'TravelokaPartner', 'Plaza Premium'];
     const [penyedia, setPenyedia] = useState("");
-    const [kodeCounter, setKodeCounter] = useState(5); // next after RWD-004
+    const [kodeCounter, setKodeCounter] = useState(data.length + 1);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
@@ -84,8 +84,23 @@ export default function Dashboard() {
                         className="space-y-3"
                         onSubmit={(e) => {
                             e.preventDefault();
-                            // TODO: handle submit here
+
+                            const form = new FormData(e.target);
+
+                            const newEntry = {
+                                kode: `RWD-${String(kodeCounter).padStart(3, '0')}`,
+                                nama: String(form.get('nama')) ?? '',
+                                deskripsi: String(form.get('deskripsi')) ?? '',
+                                penyedia: String(form.get('penyedia')) ?? '',
+                                miles: Number(form.get('miles')),
+                                periode: `${form.get('start')} — ${form.get('end')}`,
+                            };
+
+                            setData(prev => [...prev, newEntry]);
                             setKodeCounter(prev => prev + 1);
+
+                            e.target.reset();        // reset form
+                            setPenyedia("");         // reset controlled select (if using it)
                             setOpen(false);
                         }}
                     >
