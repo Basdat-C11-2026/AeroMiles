@@ -17,6 +17,26 @@ export default function Navbar() {
     setIsProfileOpen(false);
   };
 
+  // Daftar menu utama untuk masing-masing role
+  const memberLinks = [
+    { name: 'Dashboard', href: '/' },
+    { name: 'Klaim Miles', href: '/klaim-miles' },
+    { name: 'Transfer Miles', href: '/transfer-miles' },
+    { name: 'Redeem Hadiah', href: '/redeem-hadiah' },
+    { name: 'Beli Package', href: '/beli-package' },
+    { name: 'Info Tier', href: '/info-tier' },
+  ];
+
+  const staffLinks = [
+    { name: 'Dashboard', href: '/' },
+    { name: 'Kelola Klaim', href: '/kelola-klaim' },
+    { name: 'Kelola Hadiah', href: '/kelola-hadiah' },
+    { name: 'Kelola Mitra', href: '/kelola-mitra' },
+    { name: 'Laporan Transaksi', href: '/laporan-transaksi' },
+  ];
+
+  const navLinks = user?.role === 'staff' ? staffLinks : memberLinks;
+
   return (
     <nav className="bg-gradient-to-r from-blue-600 to-blue-800 shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -29,21 +49,14 @@ export default function Navbar() {
             <span className="text-white font-bold text-xl hidden sm:inline">AeroMiles</span>
           </Link>
 
-          {/* Desktop Menu - Only show when authenticated */}
+          {/* Desktop Menu */}
           {isAuthenticated && (
-            <div className="hidden md:flex items-center gap-8">
-              <Link href="/" className="text-white hover:text-blue-100 transition-colors">
-                Dashboard
-              </Link>
-              <a href="#" className="text-white hover:text-blue-100 transition-colors">
-                Penerbangan
-              </a>
-              <a href="#" className="text-white hover:text-blue-100 transition-colors">
-                Rewards
-              </a>
-              <a href="#" className="text-white hover:text-blue-100 transition-colors">
-                Transaksi
-              </a>
+            <div className="hidden lg:flex items-center gap-6">
+              {navLinks.map((link, idx) => (
+                <Link key={idx} href={link.href} className="text-white text-sm hover:text-blue-200 transition-colors">
+                  {link.name}
+                </Link>
+              ))}
             </div>
           )}
 
@@ -51,8 +64,8 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             {isAuthenticated && user ? (
               <>
-                {/* Desktop Profile */}
-                <div className="hidden md:flex items-center relative">
+                {/* Desktop Profile Dropdown */}
+                <div className="hidden lg:flex items-center relative">
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                     className="flex items-center gap-2 bg-blue-500 hover:bg-blue-700 px-4 py-2 rounded-full transition-colors text-white"
@@ -61,35 +74,33 @@ export default function Navbar() {
                       <span className="text-blue-600 font-bold text-sm">{user.name.charAt(0)}</span>
                     </span>
                     <span className="text-sm font-medium">{user.name}</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
                   </button>
 
-                  {/* Profile Dropdown */}
                   {isProfileOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-10">
-                      <div className="px-4 py-2 border-b border-gray-200">
-                        <p className="font-medium text-gray-900">{user.name}</p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
+                    <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-2 z-10">
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="font-medium text-gray-900 truncate">{user.name}</p>
+                        <p className="text-xs font-semibold text-blue-600 uppercase mt-1">
+                          {user.role}
+                        </p>
                       </div>
-                      <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
-                        ⭐ Profil Saya
-                      </a>
-                      <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
-                        ⚙️ Pengaturan
-                      </a>
-                      <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
-                        💰 Miles: {user.milesBalance.toLocaleString()}
-                      </a>
+
+                      {user.role === 'member' ? (
+                        <>
+                          <Link href="/manajemen-identitas" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">🪪 Identitas Saya</Link>
+                          <Link href="/pengaturan-profil" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">⚙️ Pengaturan Profil</Link>
+                          <div className="block px-4 py-2 text-sm text-gray-700 bg-blue-50/50">💰 {user.milesBalance.toLocaleString()} Miles</div>
+                        </>
+                      ) : (
+                        <>
+                          <Link href="/manajemen-data-member" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">👥 Kelola Member</Link>
+                          <Link href="/pengaturan-profil" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">⚙️ Pengaturan Profil</Link>
+                        </>
+                      )}
+
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors border-t border-gray-200"
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100 mt-1"
                       >
                         🚪 Logout
                       </button>
@@ -98,30 +109,14 @@ export default function Navbar() {
                 </div>
               </>
             ) : (
-              <>
-                {/* Auth Buttons - Desktop */}
-                <div className="hidden md:flex gap-3">
-                  <Link
-                    href="/login"
-                    className="px-4 py-2 text-white border border-white rounded-lg hover:bg-white hover:text-blue-600 transition-colors font-medium"
-                  >
-                    Masuk
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
-                  >
-                    Daftar
-                  </Link>
-                </div>
-              </>
+              <div className="hidden lg:flex gap-3">
+                <Link href="/login" className="px-4 py-2 text-white border border-white rounded-lg hover:bg-white hover:text-blue-600 transition-colors font-medium">Masuk</Link>
+                <Link href="/register" className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium">Daftar</Link>
+              </div>
             )}
 
             {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden text-white hover:text-blue-100 transition-colors"
-            >
+            <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden text-white hover:text-blue-100">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
@@ -131,50 +126,32 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden pb-4 space-y-2">
+          <div className="lg:hidden pb-4 space-y-1 pt-2 border-t border-blue-500 mt-2">
             {isAuthenticated ? (
               <>
-                <Link href="/" className="block text-white hover:bg-blue-700 px-3 py-2 rounded transition-colors">
-                  Dashboard
-                </Link>
-                <a href="#" className="block text-white hover:bg-blue-700 px-3 py-2 rounded transition-colors">
-                  Penerbangan
-                </a>
-                <a href="#" className="block text-white hover:bg-blue-700 px-3 py-2 rounded transition-colors">
-                  Rewards
-                </a>
-                <a href="#" className="block text-white hover:bg-blue-700 px-3 py-2 rounded transition-colors">
-                  Transaksi
-                </a>
+                <div className="px-3 py-2 text-sm text-blue-100 mb-2 font-medium">Halo, {user?.name} ({user?.role})</div>
+                {navLinks.map((link, idx) => (
+                  <Link key={idx} href={link.href} className="block text-white hover:bg-blue-700 px-3 py-2 rounded text-sm">
+                    {link.name}
+                  </Link>
+                ))}
+                
                 <div className="border-t border-blue-500 mt-2 pt-2">
-                  <a href="#" className="block text-white hover:bg-blue-700 px-3 py-2 rounded transition-colors">
-                    ⭐ Profil
-                  </a>
-                  <a href="#" className="block text-white hover:bg-blue-700 px-3 py-2 rounded transition-colors">
-                    ⚙️ Pengaturan
-                  </a>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left text-white hover:bg-blue-700 px-3 py-2 rounded transition-colors"
-                  >
-                    🚪 Logout
+                  {user?.role === 'member' ? (
+                    <Link href="/manajemen-identitas" className="block text-white hover:bg-blue-700 px-3 py-2 rounded text-sm">Identitas Saya</Link>
+                  ) : (
+                    <Link href="/manajemen-data-member" className="block text-white hover:bg-blue-700 px-3 py-2 rounded text-sm">Kelola Member</Link>
+                  )}
+                  <Link href="/pengaturan-profil" className="block text-white hover:bg-blue-700 px-3 py-2 rounded text-sm">Pengaturan Profil</Link>
+                  <button onClick={handleLogout} className="w-full text-left text-red-200 hover:bg-blue-700 px-3 py-2 rounded text-sm font-medium">
+                    Logout
                   </button>
                 </div>
               </>
             ) : (
               <>
-                <Link
-                  href="/login"
-                  className="block text-white hover:bg-blue-700 px-3 py-2 rounded transition-colors font-medium"
-                >
-                  Masuk
-                </Link>
-                <Link
-                  href="/register"
-                  className="block text-white hover:bg-blue-700 px-3 py-2 rounded transition-colors font-medium"
-                >
-                  Daftar
-                </Link>
+                <Link href="/login" className="block text-white hover:bg-blue-700 px-3 py-2 rounded">Masuk</Link>
+                <Link href="/register" className="block text-white hover:bg-blue-700 px-3 py-2 rounded">Daftar</Link>
               </>
             )}
           </div>
