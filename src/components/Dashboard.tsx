@@ -1,13 +1,18 @@
 'use client';
 
 export default function Dashboard() {
+  const user = {
+    name: 'John Doe',
+    milesBalance: 245850,
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
-            Selamat datang kembali, John! ✈️
+            Selamat datang kembali, {user.name}! ✈️
           </h1>
           <p className="text-gray-600">Kelola poin reward dan terbang lebih jauh bersama AeroMiles</p>
         </div>
@@ -19,7 +24,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-medium mb-2">Total Miles</p>
-                <p className="text-3xl font-bold text-blue-600">245,850</p>
+                <p className="text-3xl font-bold text-blue-600">{user.milesBalance.toLocaleString()}</p>
                 <p className="text-xs text-green-600 mt-2">+2,450 bulan ini</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
