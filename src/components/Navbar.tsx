@@ -89,7 +89,8 @@ export default function Navbar() {
                         <>
                           <Link href="/manajemen-identitas" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">🪪 Identitas Saya</Link>
                           <Link href="/pengaturan-profil" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">⚙️ Pengaturan Profil</Link>
-                          <div className="block px-4 py-2 text-sm text-gray-700 bg-blue-50/50">💰 {user.milesBalance.toLocaleString()} Miles</div>
+                          {/* PERBAIKAN: Ubah milesBalance menjadi totalMiles */}
+                          <div className="block px-4 py-2 text-sm text-gray-700 bg-blue-50/50">💰 {(user.totalMiles || 0).toLocaleString()} Miles</div>
                         </>
                       ) : (
                         <>
@@ -135,7 +136,7 @@ export default function Navbar() {
                     {link.name}
                   </Link>
                 ))}
-                
+
                 <div className="border-t border-blue-500 mt-2 pt-2">
                   {user?.role === 'member' ? (
                     <Link href="/manajemen-identitas" className="block text-white hover:bg-blue-700 px-3 py-2 rounded text-sm">Identitas Saya</Link>
