@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
-// Tipe data sederhana untuk Member
 interface Member {
     id: number;
     name: string;
@@ -12,7 +11,6 @@ interface Member {
 }
 
 export default function ManajemenDataMember() {
-    // Data dummy awal
     const [members, setMembers] = useState<Member[]>([
         { id: 1, name: 'Budi Santoso', email: 'budi@example.com', tier: 'Gold' },
         { id: 2, name: 'Siti Aminah', email: 'siti@example.com', tier: 'Silver' },
@@ -24,10 +22,8 @@ export default function ManajemenDataMember() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (isEditing) {
-            // Update (U)
             setMembers(members.map(m => (m.id === form.id ? form : m)));
         } else {
-            // Create (C)
             setMembers([...members, { ...form, id: Date.now() }]);
         }
         setForm({ id: 0, name: '', email: '', tier: 'Blue' });
@@ -40,7 +36,6 @@ export default function ManajemenDataMember() {
     };
 
     const handleDelete = (id: number) => {
-        // Delete (D)
         if (confirm('Apakah Anda yakin ingin menghapus member ini?')) {
             setMembers(members.filter(m => m.id !== id));
         }

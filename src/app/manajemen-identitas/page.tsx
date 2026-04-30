@@ -6,7 +6,6 @@ import { useAuth } from '@/context/AuthContext';
 export default function ManajemenIdentitasMember() {
     const { user } = useAuth();
 
-    // State untuk menyimpan identitas (Read)
     const [profile, setProfile] = useState({
         name: '',
         email: '',
@@ -17,7 +16,6 @@ export default function ManajemenIdentitasMember() {
 
     const [isEditing, setIsEditing] = useState(false);
 
-    // Inisialisasi data berdasarkan user yang sedang login
     useEffect(() => {
         if (user) {
             setProfile({
@@ -32,16 +30,13 @@ export default function ManajemenIdentitasMember() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Update (U)
         setIsEditing(false);
         alert('Identitas berhasil diperbarui!');
     };
 
     const handleDeleteIdentity = () => {
-        // Delete (D)
         if (confirm('PERINGATAN: Apakah Anda yakin ingin menghapus seluruh identitas & akun Anda? Tindakan ini tidak dapat dibatalkan.')) {
             alert('Identitas berhasil dihapus. Anda akan di-logout (Simulasi).');
-            // Panggil fungsi logout dari context auth di skenario nyata
         }
     };
 
