@@ -162,7 +162,7 @@ export default function Page() {
                             setKodeCounter(prev => prev + 1);
 
                             e.target.reset();        // reset form
-                            setPenyedia("");         // reset controlled select (if using it)
+                            setPenyedia("");         // reset controlled select
                             setOpen(false);
                         }}
                     >
