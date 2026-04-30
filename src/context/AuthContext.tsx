@@ -2,13 +2,12 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-// 1. Tambahkan role pada interface User
 interface User {
   id: string;
   email: string;
   name: string;
   milesBalance: number;
-  role: 'member' | 'staff'; 
+  role: 'member' | 'staff';
 }
 
 interface AuthContextType {
@@ -44,14 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       if (!email || !password) throw new Error('Email dan password harus diisi');
 
-      // 2. Tentukan Role berdasarkan domain email
       const isStaff = email.endsWith('@aeromiles.com');
 
       const mockUser: User = {
         id: '1',
         email,
         name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
-        milesBalance: isStaff ? 0 : 245850, // Staf tidak butuh miles
+        milesBalance: isStaff ? 0 : 245850, 
         role: isStaff ? 'staff' : 'member',
       };
 
@@ -65,22 +63,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000)); 
+
       if (!name || !email || !password) throw new Error('Semua field harus diisi');
       if (password.length < 6) throw new Error('Password minimal 6 karakter');
 
-      const isStaff = email.endsWith('@aeromiles.com');
+      const existingEmails = ['admin@aeromiles.com', 'member@test.com'];
+      if (existingEmails.includes(email.toLowerCase())) {
+        throw new Error('Email sudah terdaftar. Silakan gunakan email lain.');
+      }
 
-      const mockUser: User = {
-        id: Date.now().toString(),
-        email,
-        name,
-        milesBalance: 0,
-        role: isStaff ? 'staff' : 'member',
-      };
-
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
     } finally {
       setIsLoading(false);
     }
