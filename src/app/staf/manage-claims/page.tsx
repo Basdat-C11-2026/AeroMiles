@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import Link from 'next/link';
 
 interface Claim {
   id: number;
@@ -17,6 +19,8 @@ interface Claim {
 }
 
 export default function ManageClaimsStaf() {
+  const { user } = useAuth();
+  
   const [claims, setClaims] = useState<Claim[]>([
     {
       id: 1,
@@ -106,6 +110,24 @@ export default function ManageClaimsStaf() {
   const menungguCount = claims.filter((c) => c.status === 'Menunggu').length;
   const disetujuiCount = claims.filter((c) => c.status === 'Disetujui').length;
   const ditolakCount = claims.filter((c) => c.status === 'Ditolak').length;
+
+  // Access Guard: Hanya untuk Staff
+  if (user?.role !== 'staff') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 pt-20">
+        <div className="text-center bg-white p-8 rounded-lg shadow-md max-w-md w-full border-t-4 border-red-500">
+          <span className="text-4xl mb-4 block">🚫</span>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Akses Ditolak</h1>
+          <p className="text-gray-600 mb-6">
+            Maaf, halaman ini hanya dapat diakses oleh Staff AeroMiles.
+          </p>
+          <Link href="/" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-md transition">
+            Kembali ke Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">

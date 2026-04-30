@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import Link from 'next/link';
 
 interface Transfer {
   id: number;
@@ -13,6 +15,8 @@ interface Transfer {
 }
 
 export default function TransferMiles() {
+  const { user } = useAuth();
+  
   const [transfers, setTransfers] = useState<Transfer[]>([
     {
       id: 1,
@@ -132,6 +136,24 @@ export default function TransferMiles() {
   const receivedMiles = transfers
     .filter((t) => t.tipe === 'Terima')
     .reduce((sum, t) => sum + t.jumlahMiles, 0);
+
+  // Access Guard: Hanya untuk Member
+  if (user?.role !== 'member') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 pt-20">
+        <div className="text-center bg-white p-8 rounded-lg shadow-md max-w-md w-full border-t-4 border-red-500">
+          <span className="text-4xl mb-4 block">🚫</span>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Akses Ditolak</h1>
+          <p className="text-gray-600 mb-6">
+            Maaf, halaman ini hanya dapat diakses oleh Member AeroMiles.
+          </p>
+          <Link href="/" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-md transition">
+            Kembali ke Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
