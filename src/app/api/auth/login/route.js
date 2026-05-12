@@ -1,0 +1,46 @@
+import pool from '@/lib/db';
+import { NextResponse } from 'next/server';
+
+export async function POST(req) {
+  try {
+    const { email, password } = await req.json();
+
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email dan password wajib diisi.' }, { status: 400 });
+    }
+
+    const userQuery = await pool.query(
+      'SELECT * FROM PENGGUNA WHERE email = $1 AND password = $2',
+      [email, password]
+    );
+
+    if (userQuery.rows.length === 0) {
+      return NextResponse.json({ error: 'Email atau password salah, silakan coba lagi.' }, { status: 401 });
+    }
+
+    const memberQuery = await pool.query('SELECT * FROM MEMBER WHERE email = $1', [email]);
+    if (memberQuery.rows.length > 0) {
+      return NextResponse.json({
+        message: 'Login berhasil',
+        role: 'Member',
+        user: userQuery.rows[0],
+        memberData: memberQuery.rows[0]
+      }, { status: 200 });
+    }
+
+    const staffQuery = await pool.query('SELECT * FROM STAF WHERE email = $1', [email]);
+    if (staffQuery.rows.length > 0) {
+      return NextResponse.json({
+        message: 'Login berhasil',
+        role: 'Staf',
+        user: userQuery.rows[0],
+        staffData: staffQuery.rows[0]
+      }, { status: 200 });
+    }
+
+    return NextResponse.json({ error: 'Role tidak ditemukan.' }, { status: 403 });
+
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
