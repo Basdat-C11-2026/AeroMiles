@@ -9,4 +9,8 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
+pool.on('connect', (client) => {
+  client.query('SET search_path TO aeromiles');
+});
+
 export default pool;
