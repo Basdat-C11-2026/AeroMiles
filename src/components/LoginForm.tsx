@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ export default function LoginForm() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,26 +19,8 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!data.success) {
-        setError(data.message || 'Gagal login');
-      } else {
-        // Simpan user ke localStorage jika perlu
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('user', JSON.stringify(data.data));
-        }
-        // Cek role dan redirect
-        if (data.data.role === 'staff') {
-          router.push('/staff/dashboard');
-        } else {
-          router.push('/member/dashboard');
-        }
-      }
+      await login(email, password);
+      router.push('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal login');
     } finally {
