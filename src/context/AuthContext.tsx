@@ -50,17 +50,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  // Biarkan isLoading tetap true di awal
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Sinkronisasi sinkron (blocking) untuk mencegah flicker/redirect
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
       } catch (error) {
         console.error('Error parsing stored user:', error);
+        localStorage.removeItem('user'); // Bersihkan jika data korup
       }
     }
+    // Set loading false hanya SETELAH pengecekan localStorage selesai
     setIsLoading(false);
   }, []);
 
@@ -163,7 +168,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateProfile, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        login,
+        register,
+        logout,
+        updateProfile,
+        isAuthenticated: !!user
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

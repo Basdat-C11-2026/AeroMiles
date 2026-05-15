@@ -144,7 +144,7 @@ export default function Navbar() {
                   ) : (
                     <Link href="/manajemen-data-member" className="block text-white hover:bg-blue-700 px-3 py-2 rounded text-sm">Kelola Member</Link>
                   )}
-                  <Link href="/pengaturan-profil" className="block text-white hover:bg-blue-700 px-3 py-2 rounded text-sm">Pengaturan Profil</Link>
+                  <Link href="/profile" className="block text-white hover:bg-blue-700 px-3 py-2 rounded text-sm">Pengaturan Profil</Link>
                   <button onClick={handleLogout} className="w-full text-left text-red-200 hover:bg-blue-700 px-3 py-2 rounded text-sm font-medium">
                     Logout
                   </button>

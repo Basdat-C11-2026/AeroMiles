@@ -1,4 +1,4 @@
-export function formatCurrency(amount) {
+export function formatCurrency(amount: number | undefined | null): string {
   if (amount === undefined || amount === null) return '';
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -8,9 +8,12 @@ export function formatCurrency(amount) {
   }).format(amount);
 }
 
-export function formatDate(dateString) {
+export function formatDate(dateString: string | undefined | null): string {
   if (!dateString) return '';
   const date = new Date(dateString);
+  
+  if (isNaN(date.getTime())) return '';
+
   return new Intl.DateTimeFormat('id-ID', {
     day: '2-digit',
     month: 'long',
@@ -18,9 +21,12 @@ export function formatDate(dateString) {
   }).format(date);
 }
 
-export function formatDateTime(dateTimeString) {
+export function formatDateTime(dateTimeString: string | undefined | null): string {
   if (!dateTimeString) return '';
   const date = new Date(dateTimeString);
+
+  if (isNaN(date.getTime())) return '';
+
   return new Intl.DateTimeFormat('id-ID', {
     day: '2-digit',
     month: 'long',

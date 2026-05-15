@@ -1,10 +1,20 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 
-export async function middleware(req) {
+// 1. Definisikan interface untuk payload token agar role-based access aman
+interface JWTPayload {
+  email: string;
+  role: 'Member' | 'Staf';
+  // tambahkan field lain jika ada dalam token Anda
+}
+
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  
   const sessionCookie = req.cookies.get('session')?.value;
-  const payload = sessionCookie ? await verifyToken(sessionCookie) : null;
+  
+  const payload = sessionCookie ? await verifyToken(sessionCookie) as JWTPayload : null;
 
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register');
   const isMemberRoute = pathname.startsWith('/member');
@@ -27,6 +37,7 @@ export async function middleware(req) {
     }
   }
 
+  // Cross-role protection
   if (isMemberRoute && payload.role !== 'Member') {
     return NextResponse.redirect(new URL('/staff/dashboard', req.url));
   }
