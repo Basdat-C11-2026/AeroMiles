@@ -1,7 +1,7 @@
 import pool from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function PUT(req) {
+export async function PUT(req: NextRequest) {
   try {
     const { email, password_lama, password_baru, konfirmasi_password_baru } = await req.json();
 
@@ -24,7 +24,7 @@ export async function PUT(req) {
     await pool.query('UPDATE PENGGUNA SET password = $1 WHERE email = $2', [password_baru, email]);
 
     return NextResponse.json({ message: 'Password berhasil diubah' });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

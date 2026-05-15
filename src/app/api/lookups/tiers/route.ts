@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const result = await pool.query('SELECT * FROM TIER ORDER BY minimal_tier_miles ASC');
     return NextResponse.json(result.rows);
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

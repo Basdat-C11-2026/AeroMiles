@@ -1,7 +1,7 @@
 import pool from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function PUT(req, { params }) {
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params;
     const data = await req.json();
@@ -23,12 +23,12 @@ export async function PUT(req, { params }) {
     );
 
     return NextResponse.json({ message: 'Klaim berhasil diperbarui' });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function DELETE(req, { params }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params;
 
@@ -40,7 +40,7 @@ export async function DELETE(req, { params }) {
     await pool.query('DELETE FROM CLAIM_MISSING_MILES WHERE id = $1', [id]);
 
     return NextResponse.json({ message: 'Klaim berhasil dibatalkan' });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

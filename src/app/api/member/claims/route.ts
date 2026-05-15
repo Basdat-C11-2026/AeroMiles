@@ -1,7 +1,7 @@
 import pool from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(req) {
+export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const email = searchParams.get('email');
@@ -17,12 +17,12 @@ export async function GET(req) {
 
     const result = await pool.query(query, params);
     return NextResponse.json(result.rows);
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
@@ -37,7 +37,7 @@ export async function POST(req) {
       [email_member, maskapai, bandara_asal, bandara_tujuan, tanggal_penerbangan, flight_number, nomor_tiket, kelas_kabin, pnr]
     );
     return NextResponse.json(result.rows[0], { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }

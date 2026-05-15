@@ -1,7 +1,7 @@
 import pool from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(req) {
+export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const tier = searchParams.get('tier');
@@ -22,12 +22,12 @@ export async function GET(req) {
     
     const result = await pool.query(query, params);
     return NextResponse.json(result.rows);
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   const client = await pool.connect();
   try {
     const data = await req.json();
@@ -50,7 +50,7 @@ export async function POST(req) {
 
     await client.query('COMMIT');
     return NextResponse.json({ message: 'Member berhasil ditambahkan' }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     await client.query('ROLLBACK');
     return NextResponse.json({ error: error.message }, { status: 500 });
   } finally {

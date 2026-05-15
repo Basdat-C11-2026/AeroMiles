@@ -1,7 +1,7 @@
 import pool from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(req, { params }) {
+export async function GET(req: NextRequest, { params }: { params: { email: string } }) {
   try {
     const { email } = params;
     const result = await pool.query(
@@ -10,12 +10,12 @@ export async function GET(req, { params }) {
       [email]
     );
     return NextResponse.json(result.rows[0]);
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function PUT(req, { params }) {
+export async function PUT(req: NextRequest, { params }: { params: { email: string } }) {
   const client = await pool.connect();
   try {
     const { email } = params;
@@ -35,7 +35,7 @@ export async function PUT(req, { params }) {
 
     await client.query('COMMIT');
     return NextResponse.json({ message: 'Data member berhasil diperbarui' });
-  } catch (error) {
+  } catch (error: any) {
     await client.query('ROLLBACK');
     return NextResponse.json({ error: error.message }, { status: 500 });
   } finally {
@@ -43,12 +43,12 @@ export async function PUT(req, { params }) {
   }
 }
 
-export async function DELETE(req, { params }) {
+export async function DELETE(req: NextRequest, { params }: { params: { email: string } }) {
   try {
     const { email } = params;
     await pool.query('DELETE FROM PENGGUNA WHERE email = $1', [email]);
     return NextResponse.json({ message: 'Member berhasil dihapus' });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

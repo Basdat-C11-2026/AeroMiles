@@ -3,11 +3,9 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const result = await pool.query(
-      "SELECT * FROM HADIAH WHERE CURRENT_DATE BETWEEN valid_start_date AND program_end"
-    );
+    const result = await pool.query('SELECT iata_code, nama, kota, negara FROM BANDARA ORDER BY nama ASC');
     return NextResponse.json(result.rows);
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -1,7 +1,7 @@
 import pool from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function PUT(req, { params }) {
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params;
     const { status, email_staf } = await req.json();
@@ -14,7 +14,7 @@ export async function PUT(req, { params }) {
     );
 
     return NextResponse.json({ message: 'Status klaim berhasil diperbarui' });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }

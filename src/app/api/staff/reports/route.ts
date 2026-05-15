@@ -1,7 +1,7 @@
 import pool from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(req) {
+export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type');
@@ -43,12 +43,12 @@ export async function GET(req) {
 
     const result = await pool.query(query, params);
     return NextResponse.json(result.rows);
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function DELETE(req) {
+export async function DELETE(req: NextRequest) {
   try {
     const { tipe, member, timestamp } = await req.json();
 
@@ -61,7 +61,7 @@ export async function DELETE(req) {
     }
 
     return NextResponse.json({ message: 'Riwayat transaksi berhasil dihapus' });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

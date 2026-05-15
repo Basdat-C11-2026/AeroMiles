@@ -1,16 +1,16 @@
 import pool from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
   try {
     const result = await pool.query('SELECT email_mitra, id_penyedia, nama_mitra, tanggal_kerja_sama FROM MITRA');
     return NextResponse.json(result.rows);
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   const client = await pool.connect();
   try {
     const { email_mitra, nama_mitra, tanggal_kerja_sama } = await req.json();
@@ -27,7 +27,7 @@ export async function POST(req) {
 
     await client.query('COMMIT');
     return NextResponse.json({ message: 'Mitra berhasil didaftarkan' }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     await client.query('ROLLBACK');
     return NextResponse.json({ error: error.message }, { status: 500 });
   } finally {

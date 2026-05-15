@@ -1,5 +1,5 @@
 import pool from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
   try {
@@ -8,12 +8,12 @@ export async function GET() {
       FROM HADIAH
     `);
     return NextResponse.json(result.rows);
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   try {
     const { nama, miles, deskripsi, valid_start_date, program_end, id_penyedia } = await req.json();
 
@@ -24,7 +24,7 @@ export async function POST(req) {
     );
 
     return NextResponse.json({ message: 'Reward berhasil dibuat' }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -13,7 +13,7 @@ export async function GET() {
     `;
     const result = await pool.query(query);
     return NextResponse.json(result.rows);
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

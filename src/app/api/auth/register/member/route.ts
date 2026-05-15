@@ -1,7 +1,7 @@
 import pool from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   const client = await pool.connect();
   try {
     const {
@@ -31,7 +31,7 @@ export async function POST(req) {
     await client.query('COMMIT');
 
     return NextResponse.json({ message: 'Registrasi Member berhasil.' }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     await client.query('ROLLBACK');
     return NextResponse.json({ error: error.message }, { status: 500 });
   } finally {
