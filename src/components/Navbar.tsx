@@ -90,14 +90,13 @@ export default function Navbar() {
                       {user.role === 'member' ? (
                         <>
                           <Link href="/manajemen-identitas" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">🪪 Identitas Saya</Link>
-                          <Link href="/pengaturan-profil" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">⚙️ Pengaturan Profil</Link>
-                          {/* PERBAIKAN: Ubah milesBalance menjadi totalMiles */}
+                          <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">⚙️ Pengaturan Profil</Link>
                           <div className="block px-4 py-2 text-sm text-gray-700 bg-blue-50/50">💰 {(user.totalMiles || 0).toLocaleString()} Miles</div>
                         </>
                       ) : (
                         <>
                           <Link href="/manajemen-data-member" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">👥 Kelola Member</Link>
-                          <Link href="/pengaturan-profil" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">⚙️ Pengaturan Profil</Link>
+                          <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">⚙️ Pengaturan Profil</Link>
                         </>
                       )}
 

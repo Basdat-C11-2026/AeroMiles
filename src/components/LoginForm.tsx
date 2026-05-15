@@ -41,23 +41,7 @@ export default function LoginForm() {
             <h1 className="text-3xl font-bold text-gray-900">AeroMiles</h1>
             <p className="text-gray-600 mt-2">Masuk ke akun Anda</p>
           </div>
-
-          {/* Informasi Cara Login (Simulasi) */}
-          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-            <p className="text-sm font-bold text-blue-900 mb-2">💡 Info Simulasi Login:</p>
-            <ul className="text-sm text-blue-800 space-y-1 list-disc pl-4">
-              <li>
-                <span className="font-semibold">Sebagai Member:</span> Gunakan email bebas (contoh: <code className="bg-blue-100 px-1 rounded">user@gmail.com</code>).
-              </li>
-              <li>
-                <span className="font-semibold">Sebagai Staf:</span> Gunakan email berakhiran <code className="bg-blue-100 px-1 rounded">@aeromiles.com</code>.
-              </li>
-            </ul>
-            <p className="text-xs text-blue-600 italic mt-2">
-              *Password bebas, minimal 6 karakter.
-            </p>
-          </div>
-
+          
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Error Alert */}
