@@ -20,21 +20,21 @@ export default function Navbar() {
   // Daftar menu utama untuk masing-masing role
   const memberLinks = [
     { name: 'Dashboard', href: '/' },
-    { name: 'Identitas Saya', href: '/manajemen-identitas' },
-    { name: 'Klaim Miles', href: '/claim-missing-miles' },
-    { name: 'Transfer Miles', href: '/transfer-miles' },
-    { name: 'Redeem Hadiah', href: '/redeem-hadiah' },
-    { name: 'Beli Package', href: '/beli-package' },
-    { name: 'Info Tier', href: '/info-tier' },
+    { name: 'Identitas Saya', href: '/member/identities' },
+    { name: 'Klaim Miles', href: '/member/claims' },
+    { name: 'Transfer Miles', href: '/member/transfers' },
+    { name: 'Redeem Hadiah', href: '/member/redeem' },
+    { name: 'Beli Package', href: '/member/packages' },
+    { name: 'Info Tier', href: '/member/tiers' },
   ];
 
   const staffLinks = [
     { name: 'Dashboard', href: '/' },
-    { name: 'Kelola Member', href: '/manajemen-data-member' },
-    { name: 'Kelola Klaim', href: '/staf/manage-claims' },
-    { name: 'Kelola Hadiah', href: '/kelola-hadiah' },
-    { name: 'Kelola Mitra', href: '/kelola-mitra' },
-    { name: 'Laporan Transaksi', href: '/laporan-transaksi' },
+    { name: 'Kelola Member', href: '/staff/members' },
+    { name: 'Kelola Klaim', href: '/staff/claims' },
+    { name: 'Kelola Hadiah', href: '/staff/rewards' },
+    { name: 'Kelola Mitra', href: '/staff/partners' },
+    { name: 'Laporan Transaksi', href: '/staff/reports' },
   ];
 
   const navLinks = user?.role === 'staff' ? staffLinks : memberLinks;
@@ -89,13 +89,13 @@ export default function Navbar() {
 
                       {user.role === 'member' ? (
                         <>
-                          <Link href="/manajemen-identitas" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">🪪 Identitas Saya</Link>
+                          <Link href="/member/identities" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">🪪 Identitas Saya</Link>
                           <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">⚙️ Pengaturan Profil</Link>
                           <div className="block px-4 py-2 text-sm text-gray-700 bg-blue-50/50">💰 {(user.totalMiles || 0).toLocaleString()} Miles</div>
                         </>
                       ) : (
                         <>
-                          <Link href="/manajemen-data-member" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">👥 Kelola Member</Link>
+                          <Link href="/staff/members" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">👥 Kelola Member</Link>
                           <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">⚙️ Pengaturan Profil</Link>
                         </>
                       )}
@@ -140,9 +140,9 @@ export default function Navbar() {
 
                 <div className="border-t border-blue-500 mt-2 pt-2">
                   {user?.role === 'member' ? (
-                    <Link href="/manajemen-identitas" className="block text-white hover:bg-blue-700 px-3 py-2 rounded text-sm">Identitas Saya</Link>
+                    <Link href="/member/identities" className="block text-white hover:bg-blue-700 px-3 py-2 rounded text-sm">Identitas Saya</Link>
                   ) : (
-                    <Link href="/manajemen-data-member" className="block text-white hover:bg-blue-700 px-3 py-2 rounded text-sm">Kelola Member</Link>
+                    <Link href="/staff/members" className="block text-white hover:bg-blue-700 px-3 py-2 rounded text-sm">Kelola Member</Link>
                   )}
                   <Link href="/profile" className="block text-white hover:bg-blue-700 px-3 py-2 rounded text-sm">Pengaturan Profil</Link>
                   <button onClick={handleLogout} className="w-full text-left text-red-200 hover:bg-blue-700 px-3 py-2 rounded text-sm font-medium">
