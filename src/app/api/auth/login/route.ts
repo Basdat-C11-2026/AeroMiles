@@ -11,8 +11,7 @@ export async function POST(req: NextRequest) {
     }
 
     const userQuery = await pool.query(
-      'SELECT * FROM PENGGUNA WHERE email = $1 AND password = $2',
-      [email, password]
+      'SELECT * FROM verifikasi_login($1, $2)', [email, password]
     );
 
     if (userQuery.rows.length === 0) {

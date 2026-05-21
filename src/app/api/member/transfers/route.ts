@@ -6,6 +6,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const email = searchParams.get('email');
 
+    if (!email) {
+      return NextResponse.json({ error: 'Email dibutuhkan' }, { status: 400 });
+    }
+
     const result = await pool.query(
       `SELECT * FROM TRANSFER 
        WHERE email_member_1 = $1 OR email_member_2 = $1 
@@ -19,23 +23,32 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const client = await pool.connect();
   try {
     const { email_pengirim, email_penerima, jumlah, catatan } = await req.json();
 
-    await client.query('BEGIN');
+    // Validasi input dasar dari frontend
+    if (!email_pengirim || !email_penerima || !jumlah) {
+      return NextResponse.json(
+        { error: 'Data transfer tidak lengkap' },
+        { status: 400 }
+      );
+    }
 
-    const res = await client.query(
-      'INSERT INTO TRANSFER (email_member_1, email_member_2, jumlah, catatan, timestamp) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP) RETURNING *',
+    const res = await pool.query(
+      `INSERT INTO TRANSFER (email_member_1, email_member_2, jumlah, catatan, timestamp) 
+       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP) RETURNING *`,
       [email_pengirim, email_penerima, jumlah, catatan]
     );
 
-    await client.query('COMMIT');
-    return NextResponse.json(res.rows[0], { status: 201 });
+    return NextResponse.json({ 
+        success: true, 
+        message: `Transfer ${jumlah} miles ke ${email_penerima} berhasil.`,
+        data: res.rows[0] 
+    }, { status: 201 });
   } catch (error: any) {
-    await client.query('ROLLBACK');
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  } finally {
-    client.release();
+    return NextResponse.json(
+      { error: error.message }, 
+      { status: 400 }
+    );
   }
 }
