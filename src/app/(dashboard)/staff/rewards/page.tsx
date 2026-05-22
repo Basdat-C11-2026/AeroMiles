@@ -1,66 +1,68 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type Reward = {
-    kode: string;
+    kode_hadiah: string;
     nama: string;
     deskripsi: string;
-    penyedia: string;
-    miles: number;
-    start: Date;
-    end: Date;
+    id_penyedia: string;
+    miles: string;
+    valid_start_date: string;
+    program_end: string;
+    penyedia_nama: string;
 };
+
+type Penyedia = {
+    id_penyedia: string;
+    nama: string;
+};
+
 
 export default function Page() {
     const [createOpen, setOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [selected, setSelected] = useState<Reward | null>(null); // row being edited/deleted
-    const [data, setData] = useState<Reward[]>([{
-        kode: 'RWD-001',
-        nama: 'Tiket Domestik PP',
-        deskripsi: '...',
-        penyedia: 'Garuda Indonesia',
-        miles: 15000,
-        start: new Date(2024, 0, 1),
-        end: new Date(2025, 11, 31),
-    },
-    {
-        kode: 'RWD-002',
-        nama: 'Upgrade ke Business Class',
-        deskripsi: '...',
-        penyedia: 'Garuda Indonesia',
-        miles: 25000,
-        start: new Date(2024, 0, 1),
-        end: new Date(2025, 11, 31),
-    },
-    {
-        kode: 'RWD-003',
-        nama: 'Voucher Hotel Rp 500.000',
-        deskripsi: '...',
-        penyedia: 'TravelokaPartner',
-        miles: 8000,
-        start: new Date(2024, 5, 1),
-        end: new Date(2025, 5, 30),
-    },
-    {
-        kode: 'RWD-004',
-        nama: 'Akses Lounge 1x',
-        deskripsi: '...',
-        penyedia: 'Plaza Premium',
-        miles: 3000,
-        start: new Date(2024, 0, 1),
-        end: new Date(2025, 11, 31),
-    },
-    ]);
-    const penyediaList = ['Garuda Indonesia', 'TravelokaPartner', 'Plaza Premium'];
-    const [penyedia, setPenyedia] = useState("");
-    const [kodeCounter, setKodeCounter] = useState(data.length + 1);
+    const [data, setData] = useState<Reward[]>([]);
+    const [penyediaList, setPenyediaList] = useState<Penyedia[]>([]);
+    const [idPenyedia, setIdPenyedia] = useState<string>("");
 
     const formatDate = (d: Date) =>
         new Date(d.getTime() - d.getTimezoneOffset() * 60000)
             .toISOString()
             .slice(0, 10);
+
+    const isValidDateRange = (start: string, end: string) => {
+        return new Date(start) <= new Date(end);
+    };
+
+    const isExpired = (end: string) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        return new Date(end) < today;
+    };
+
+    useEffect(() => {
+        fetchRewards();
+        fetchPenyedia();
+    }, []);
+
+    async function fetchRewards() {
+        try {
+            const res = await fetch('/api/staff/rewards');
+            const json = await res.json();
+            setData(json);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function fetchPenyedia() {
+        const res = await fetch('/api/lookups/provider');
+        const json = await res.json();
+        setPenyediaList(json);
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
@@ -96,34 +98,42 @@ export default function Page() {
                         </thead>
                         <tbody>
                             {data.map((entry, idx) => (<tr key={idx} className="hover:bg-base-300">
-                                <td>{entry.kode}</td>
+                                <td>{entry.kode_hadiah}</td>
                                 <td>{entry.nama}</td>
                                 <td>{entry.deskripsi}</td>
-                                <td>{entry.penyedia}</td>
+                                <td>{entry.penyedia_nama}</td>
                                 <td>{entry.miles}</td>
                                 <td>
-                                    {formatDate(entry.start)} — {formatDate(entry.end)}</td>
+                                    {formatDate(new Date(entry.valid_start_date))} — {formatDate(new Date(entry.program_end))}</td>
                                 <td>
-                                    <div className="flex space-x-2"><a
+                                    <div className="flex space-x-2"><button
+                                        type="button"
                                         className="text-blue-700 cursor-pointer"
                                         onClick={() => {
                                             setSelected(entry);
-                                            setPenyedia(entry.penyedia);
+                                            setIdPenyedia(entry.id_penyedia);
                                             setEditOpen(true);
                                         }}
                                     >
                                         Edit
-                                    </a>
+                                    </button>
 
-                                        <a
-                                            className="text-red-700 cursor-pointer"
+                                        <button
+                                            type="button"
+                                            disabled={!isExpired(entry.program_end)}
+                                            className={`cursor-pointer ${isExpired(entry.program_end)
+                                                ? 'text-red-700'
+                                                : 'text-gray-400 cursor-not-allowed'
+                                                }`}
                                             onClick={() => {
                                                 setSelected(entry);
                                                 setDeleteOpen(true);
                                             }}
                                         >
-                                            Delete
-                                        </a>
+                                            {isExpired(entry.program_end)
+                                                ? 'Delete'
+                                                : 'Belum Expired'}
+                                        </button>
                                     </div>
                                 </td>
                             </tr>))}
@@ -143,36 +153,46 @@ export default function Page() {
                     <form
                         method="dialog"
                         className="space-y-3"
-                        onSubmit={(e) => {
+                        onSubmit={async (e) => {
                             e.preventDefault();
 
-                            const form = new FormData(e.target);
+                            const formElement = e.currentTarget;
+                            const form = new FormData(formElement);
 
-                            const newEntry = {
-                                kode: `RWD-${String(kodeCounter).padStart(3, '0')}`,
-                                nama: String(form.get('nama')) ?? '',
-                                deskripsi: String(form.get('deskripsi')) ?? '',
-                                penyedia: String(form.get('penyedia')) ?? '',
+                            const body = {
+                                nama: form.get('nama'),
+                                deskripsi: form.get('deskripsi'),
                                 miles: Number(form.get('miles')),
-                                start: new Date(String(form.get('start'))),
-                                end: new Date(String(form.get('end'))),
+                                valid_start_date: form.get('start'),
+                                program_end: form.get('end'),
+                                id_penyedia: form.get('penyedia'),
                             };
 
-                            setData(prev => [...prev, newEntry]);
-                            setKodeCounter(prev => prev + 1);
 
-                            e.target.reset();        // reset form
-                            setPenyedia("");         // reset controlled select
-                            setOpen(false);
+                            if (!isValidDateRange(
+                                String(body.valid_start_date),
+                                String(body.program_end)
+                            )) {
+                                alert('Tanggal akhir harus setelah atau sama dengan tanggal mulai.');
+                                return;
+                            }
+
+                            const res = await fetch('/api/staff/rewards', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(body),
+                            });
+
+                            if (res.ok) {
+                                await fetchRewards();
+                                formElement.reset();
+                                setIdPenyedia("");
+                                setOpen(false);
+                            }
                         }}
                     >
-                        <input
-                            name="kode"
-                            className="input input-bordered w-full"
-                            value={`RWD-${String(kodeCounter).padStart(3, '0')}`}
-                            disabled
-                        />
-
                         <input
                             name="nama"
                             className="input input-bordered w-full"
@@ -188,14 +208,19 @@ export default function Page() {
 
                         <select
                             name="penyedia"
-                            className={`select select-bordered w-full  ${!penyedia ? 'text-gray-400' : 'text-base-content'}`}
+                            className={`select select-bordered w-full  ${!idPenyedia ? 'text-gray-400' : 'text-base-content'}`}
                             required
                             defaultValue=""
-                            onChange={(e) => setPenyedia(e.target.value)}
+                            onChange={(e) => setIdPenyedia(e.target.value)}
                         >
                             <option disabled hidden value="">Pilih Penyedia</option>
-                            {penyediaList.map((p, i) => (
-                                <option key={i} value={p}>{p}</option>
+                            {penyediaList.map((p) => (
+                                <option
+                                    key={p.id_penyedia}
+                                    value={p.id_penyedia}
+                                >
+                                    {p.nama}
+                                </option>
                             ))}
                         </select>
 
@@ -253,33 +278,47 @@ export default function Page() {
                     {selected && (
                         <form
                             className="space-y-3"
-                            onSubmit={(e) => {
+                            onSubmit={async (e) => {
                                 e.preventDefault();
-                                const form = new FormData(e.target);
+
+                                const form = new FormData(e.currentTarget);
 
                                 const updated = {
-                                    ...selected,
-                                    nama: String(form.get('nama') ?? ''),
-                                    deskripsi: String(form.get('deskripsi') ?? ''),
-                                    penyedia: String(form.get('penyedia') ?? ''),
+                                    nama: form.get('nama'),
+                                    deskripsi: form.get('deskripsi'),
                                     miles: Number(form.get('miles')),
-                                    start: new Date(String(form.get('start'))),
-                                    end: new Date(String(form.get('end'))),
+                                    valid_start_date: form.get('start'),
+                                    program_end: form.get('end'),
+                                    id_penyedia: form.get('penyedia'),
                                 };
 
-                                setData(prev =>
-                                    prev.map(item =>
-                                        item.kode === selected.kode ? updated : item
-                                    )
-                                );
 
-                                setEditOpen(false);
-                                setSelected(null);
+                                if (!isValidDateRange(
+                                    String(updated.valid_start_date),
+                                    String(updated.program_end)
+                                )) {
+                                    alert('Tanggal akhir harus setelah atau sama dengan tanggal mulai.');
+                                    return;
+                                }
+
+                                const res = await fetch(`/api/staff/rewards/${selected?.kode_hadiah}`, {
+                                    method: 'PUT',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify(updated),
+                                });
+
+                                if (res.ok) {
+                                    await fetchRewards();
+                                    setEditOpen(false);
+                                    setSelected(null);
+                                }
                             }}
                         >
                             <input
                                 className="input input-bordered w-full"
-                                value={selected.kode}
+                                value={selected.kode_hadiah}
                                 disabled
                             />
 
@@ -299,11 +338,15 @@ export default function Page() {
                             <select
                                 name="penyedia"
                                 className="select select-bordered w-full"
-                                value={penyedia}
-                                onChange={(e) => setPenyedia(e.target.value)}
+                                defaultValue={selected.id_penyedia}
                             >
-                                {penyediaList.map((p, i) => (
-                                    <option key={i} value={p}>{p}</option>
+                                {penyediaList.map((p) => (
+                                    <option
+                                        key={p.id_penyedia}
+                                        value={p.id_penyedia}
+                                    >
+                                        {p.nama}
+                                    </option>
                                 ))}
                             </select>
 
@@ -319,13 +362,13 @@ export default function Page() {
                                 <input
                                     name="start"
                                     type="date"
-                                    defaultValue={formatDate(selected.start)}
+                                    defaultValue={formatDate(new Date(selected.valid_start_date))}
                                     className="input input-bordered w-full"
                                 />
                                 <input
                                     name="end"
                                     type="date"
-                                    defaultValue={formatDate(selected.end)}
+                                    defaultValue={formatDate(new Date(selected.program_end))}
                                     className="input input-bordered w-full"
                                 />
                             </div>
@@ -361,12 +404,16 @@ export default function Page() {
                         </button>
                         <button
                             className="btn btn-error"
-                            onClick={() => {
-                                setData(prev =>
-                                    prev.filter(item => item.kode !== selected?.kode)
-                                );
-                                setDeleteOpen(false);
-                                setSelected(null);
+                            onClick={async () => {
+                                const res = await fetch(`/api/staff/rewards/${selected?.kode_hadiah}`, {
+                                    method: 'DELETE',
+                                });
+
+                                if (res.ok) {
+                                    await fetchRewards();
+                                    setDeleteOpen(false);
+                                    setSelected(null);
+                                }
                             }}
                         >
                             Delete
