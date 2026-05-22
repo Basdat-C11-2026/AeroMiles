@@ -277,6 +277,7 @@ export default function Page() {
 
                     {selected && (
                         <form
+                            key={selected.id_penyedia}
                             className="space-y-3"
                             onSubmit={async (e) => {
                                 e.preventDefault();
@@ -302,7 +303,7 @@ export default function Page() {
                                 }
 
                                 const res = await fetch(`/api/staff/rewards/${selected?.kode_hadiah}`, {
-                                    method: 'PUT',
+                                    method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
                                     },

@@ -7,7 +7,7 @@ type Params = {
     }>;
 };
 
-export async function PUT(req: NextRequest, { params }: Params) {
+export async function POST(req: NextRequest, { params }: Params) {
     try {
         const { kode } = await params;
 
