@@ -4,8 +4,23 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET() {
   try {
     const result = await pool.query(`
-      SELECT kode_hadiah, nama, miles, deskripsi, valid_start_date, program_end, id_penyedia 
-      FROM HADIAH
+      SELECT
+        h.kode_hadiah,
+        h.nama,
+        h.miles,
+        h.deskripsi,
+        h.valid_start_date,
+        h.program_end,
+        h.id_penyedia,
+        COALESCE(m.nama_maskapai, mp.nama_mitra) AS penyedia_nama
+
+      FROM HADIAH h
+      LEFT JOIN MASKAPAI m
+        ON h.id_penyedia = m.id_penyedia
+      LEFT JOIN MITRA mp
+        ON h.id_penyedia = mp.id_penyedia
+
+      ORDER BY h.kode_hadiah DESC
     `);
     return NextResponse.json(result.rows);
   } catch (error: any) {

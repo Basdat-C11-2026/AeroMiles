@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const result = await pool.query('SELECT email_mitra, id_penyedia, nama_mitra, tanggal_kerja_sama FROM MITRA');
+    const result = await pool.query('SELECT email_mitra, id_penyedia, nama_mitra, tanggal_kerja_sama FROM MITRA ORDER BY tanggal_kerja_sama DESC');
     return NextResponse.json(result.rows);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
