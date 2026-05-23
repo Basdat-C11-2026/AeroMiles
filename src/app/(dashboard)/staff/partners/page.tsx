@@ -1,10 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type Mitra = {
-    email: string;
-    nama: string;
-    start: Date;
+    email_mitra: string;
+    nama_mitra: string;
+    tanggal_kerja_sama: string;
+    id_penyedia: string;
 };
 
 export default function Page() {
@@ -12,22 +13,26 @@ export default function Page() {
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [selected, setSelected] = useState<Mitra | null>(null); // row being edited/deleted
-    const [data, setData] = useState<Mitra[]>([{
-        email: 'partner@traveloka.com',
-        nama: 'TravelokaPartner',
-        start: new Date(2023, 1, 15),
-    },
-    {
-        email: 'partner@plazapremium.com',
-        nama: 'Plaza Premium',
-        start: new Date(2023, 6, 1),
-    },
-    ]);
+    const [data, setData] = useState<Mitra[]>([]);
 
     const formatDate = (d: Date) =>
         new Date(d.getTime() - d.getTimezoneOffset() * 60000)
             .toISOString()
             .slice(0, 10);
+
+    useEffect(() => {
+        fetchMitra();
+    }, []);
+
+    async function fetchMitra() {
+        try {
+            const res = await fetch('/api/staff/partners');
+            const json = await res.json();
+            setData(json);
+        } catch (err) {
+            console.error(err);
+        }
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
@@ -60,9 +65,9 @@ export default function Page() {
                         </thead>
                         <tbody>
                             {data.map((entry, idx) => (<tr key={idx} className="hover:bg-base-300">
-                                <td>{entry.email}</td>
-                                <td>{entry.nama}</td>
-                                <td>{formatDate(entry.start)}</td>
+                                <td>{entry.email_mitra}</td>
+                                <td>{entry.nama_mitra}</td>
+                                <td>{formatDate(new Date(entry.tanggal_kerja_sama))}</td>
                                 <td>
                                     <div className="flex space-x-2"><a
                                         className="text-blue-700 cursor-pointer"
@@ -102,21 +107,31 @@ export default function Page() {
                     <form
                         method="dialog"
                         className="space-y-3"
-                        onSubmit={(e) => {
+                        onSubmit={async (e) => {
                             e.preventDefault();
 
-                            const form = new FormData(e.target);
+                            const formElement = e.currentTarget;
+                            const form = new FormData(formElement);
 
-                            const newEntry = {
-                                email: String(form.get('email')) ?? '',
-                                nama: String(form.get('nama')) ?? '',
-                                start: new Date(String(form.get('start'))),
+                            const body = {
+                                email_mitra: form.get('email'),
+                                nama_mitra: form.get('nama'),
+                                tanggal_kerja_sama: form.get('start'),
                             };
 
-                            setData(prev => [...prev, newEntry]);
+                            const res = await fetch('/api/staff/partners', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(body),
+                            });
 
-                            e.target.reset();        // reset form
-                            setOpen(false);
+                            if (res.ok) {
+                                await fetchMitra();
+                                formElement.reset();
+                                setOpen(false);
+                            }
                         }}
                     >
 
@@ -131,12 +146,14 @@ export default function Page() {
                             name="nama"
                             className="input input-bordered w-full"
                             placeholder="Nama Mitra"
+                            required
                         />
 
                         <input
                             name="start"
                             type="date"
                             className="input input-bordered w-full"
+                            required
                         />
 
                         <div className="modal-action">
@@ -171,37 +188,46 @@ export default function Page() {
 
                     {selected && (
                         <form
+                            key={selected.id_penyedia}
                             className="space-y-3"
-                            onSubmit={(e) => {
+                            onSubmit={async (e) => {
                                 e.preventDefault();
-                                const form = new FormData(e.target);
+
+                                const formElement = e.currentTarget;
+                                const form = new FormData(formElement);
 
                                 const updated = {
-                                    ...selected,
-                                    email: String(form.get('email') ?? ''),
-                                    nama: String(form.get('nama') ?? ''),
-                                    start: new Date(String(form.get('start'))),
+                                    nama_mitra: form.get('nama'),
+                                    tanggal_kerja_sama: form.get('start'),
                                 };
 
-                                setData(prev =>
-                                    prev.map(item =>
-                                        item.email === selected.email ? updated : item
-                                    )
-                                );
+                                const res = await fetch(`/api/staff/partners/${selected?.id_penyedia}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify(updated),
+                                });
 
-                                setEditOpen(false);
-                                setSelected(null);
+                                console.log(await res.json());
+
+                                if (res.ok) {
+                                    await fetchMitra();
+                                    formElement.reset();
+                                    setEditOpen(false);
+                                }
                             }}
                         >
                             <input
                                 name="email"
-                                defaultValue={selected.email}
+                                defaultValue={selected.email_mitra}
                                 className="input input-bordered w-full"
+                                disabled
                             />
 
                             <input
                                 name="nama"
-                                defaultValue={selected.nama}
+                                defaultValue={selected.nama_mitra}
                                 className="input input-bordered w-full"
                                 required
                             />
@@ -209,8 +235,9 @@ export default function Page() {
                             <input
                                 name="start"
                                 type="date"
-                                defaultValue={formatDate(selected.start)}
+                                defaultValue={formatDate(new Date(selected.tanggal_kerja_sama))}
                                 className="input input-bordered w-full"
+                                required
                             />
 
                             <div className="modal-action">
@@ -235,7 +262,7 @@ export default function Page() {
                 <div className="modal-box">
                     <h3 className="font-bold text-lg">Hapus Mitra?</h3>
                     <p className="py-2">
-                        {selected?.nama}
+                        {selected?.nama_mitra}
                     </p>
 
                     <div className="modal-action">
@@ -244,12 +271,25 @@ export default function Page() {
                         </button>
                         <button
                             className="btn btn-error"
-                            onClick={() => {
-                                setData(prev =>
-                                    prev.filter(item => item.email !== selected?.email)
+                            onClick={async () => {
+                                if (!selected) return;
+
+                                const res = await fetch(
+                                    `/api/staff/partners/${selected.id_penyedia}`,
+                                    {
+                                        method: 'DELETE',
+                                    }
                                 );
-                                setDeleteOpen(false);
-                                setSelected(null);
+
+                                if (res.ok) {
+                                    await fetchMitra();
+
+                                    setDeleteOpen(false);
+                                    setSelected(null);
+                                } else {
+                                    const err = await res.json();
+                                    alert(err.error ?? 'Failed to delete mitra');
+                                }
                             }}
                         >
                             Delete
