@@ -5,7 +5,6 @@ import pool from "@/lib/db";
 import { verifyToken } from "@/lib/auth"; // Sesuaikan dengan path utilitas auth-mu
 
 export default async function StaffDashboardPage() {
-  // 1. Validasi Sesi Pengguna (Menggunakan await cookies() untuk Next.js terbaru)
   const cookieStore = await cookies();
   const session = cookieStore.get("session");
 
@@ -13,16 +12,13 @@ export default async function StaffDashboardPage() {
     redirect("/login");
   }
 
-  // Dekode token untuk mengambil email pengguna
   const decoded = await verifyToken(session.value);
   const userEmail = decoded?.email;
 
-  // Pastikan yang login adalah Staf
   if (!userEmail || decoded?.role?.toLowerCase() !== "staf") {
     redirect("/unauthorized"); 
   }
 
-  // 2. Ambil Data Profil Umum & Detail Staf (beserta nama maskapai)
   const staffQuery = `
     SELECT 
       p.salutation, p.first_mid_name, p.last_name, p.email, p.country_code, 
@@ -45,7 +41,6 @@ export default async function StaffDashboardPage() {
     );
   }
 
-  // 3. Ambil Metrik Klaim: Menunggu (Global/Semua Staf)
   const pendingQuery = `
     SELECT count(*) as total_pending 
     FROM claim_missing_miles 
@@ -54,7 +49,6 @@ export default async function StaffDashboardPage() {
   const { rows: pendingRows } = await pool.query(pendingQuery);
   const totalPending = parseInt(pendingRows[0]?.total_pending || "0", 10);
 
-  // 4. Ambil Metrik Klaim: Disetujui & Ditolak (Khusus Staf yang login)
   const handledQuery = `
     SELECT status_penerimaan, count(*) as jumlah 
     FROM claim_missing_miles 

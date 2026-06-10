@@ -5,7 +5,6 @@ import pool from "@/lib/db";
 import { verifyToken } from "@/lib/auth"; 
 
 export default async function MemberDashboardPage() {
-  // 1. Validasi Sesi Pengguna
   const cookieStore = await cookies();
   const session = cookieStore.get("session");
 
@@ -17,7 +16,7 @@ export default async function MemberDashboardPage() {
   const userEmail = decoded?.email;
 
   if (!userEmail || decoded?.role?.toLowerCase() !== "member") {
-    redirect("/unauthorized"); // Atau tampilkan halaman akses ditolak
+    redirect("/unauthorized"); 
   }
 
   const memberQuery = `
