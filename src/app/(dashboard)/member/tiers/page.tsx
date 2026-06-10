@@ -1,57 +1,21 @@
-'use client';
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import pool from "@/lib/db";
+import { verifyToken } from "@/lib/auth";
 
-import { useAuth } from '@/context/AuthContext';
-import Link from 'next/link';
+export default async function InfoTier() {
+  const cookieStore = await cookies();
+  const session = cookieStore.get("session");
 
-interface TierInfo {
-  name: string;
-  minFlights: number;
-  minMiles: number;
-  benefits: string[];
-  colorClass: string;
-  bgClass: string;
-}
-
-const tierData: TierInfo[] = [
-  {
-    name: 'Blue',
-    minFlights: 0,
-    minMiles: 0,
-    benefits: ['Perolehan miles standar', 'Akses prioritas call center'],
-    colorClass: 'text-blue-600',
-    bgClass: 'bg-blue-50 border-blue-200'
-  },
-  {
-    name: 'Silver',
-    minFlights: 10,
-    minMiles: 10000,
-    benefits: ['Bonus 25% miles', 'Prioritas Check-in', '+5kg bagasi ekstra'],
-    colorClass: 'text-slate-600',
-    bgClass: 'bg-slate-50 border-slate-300'
-  },
-  {
-    name: 'Gold',
-    minFlights: 30,
-    minMiles: 30000,
-    benefits: ['Bonus 50% miles', 'Akses Executive Lounge', '+15kg bagasi ekstra', 'Prioritas Boarding'],
-    colorClass: 'text-amber-600',
-    bgClass: 'bg-amber-50 border-amber-300'
-  },
-  {
-    name: 'Platinum',
-    minFlights: 50,
-    minMiles: 50000,
-    benefits: ['Bonus 100% miles', 'Akses First Class Lounge', '+25kg bagasi ekstra', 'Gratis Upgrade Kelas (Jika tersedia)'],
-    colorClass: 'text-indigo-600',
-    bgClass: 'bg-indigo-50 border-indigo-200'
+  if (!session) {
+    redirect("/login");
   }
-];
 
-export default function InfoTier() {
-  const { user } = useAuth();
+  const decoded = await verifyToken(session.value);
+  const userEmail = decoded?.email;
 
-  // Akses Guard
-  if (user?.role !== 'member') {
+  if (!userEmail || decoded?.role?.toLowerCase() !== "member") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="text-center bg-white p-8 rounded-lg shadow-md max-w-md w-full border-t-4 border-red-500">
@@ -66,12 +30,28 @@ export default function InfoTier() {
     );
   }
 
-  const currentTierIndex = tierData.findIndex(t => t.name === user.tier);
-  const nextTier = tierData[currentTierIndex + 1];
-  
-  // Kalkulasi selisih miles untuk naik tier (Asumsi menggunakan totalMiles)
-  const currentMiles = user.totalMiles || 0;
-  const milesToNextTier = nextTier ? Math.max(0, nextTier.minMiles - currentMiles) : 0;
+  const memberQuery = await pool.query(
+    'SELECT id_tier, total_miles FROM member WHERE email = $1', 
+    [userEmail]
+  );
+  const userData = memberQuery.rows[0];
+
+  const tierQuery = await pool.query('SELECT * FROM tier ORDER BY minimal_tier_miles ASC');
+  const tiers = tierQuery.rows;
+
+  const getUIConfig = (tierName: string) => {
+    const name = tierName.toLowerCase();
+    if (name.includes('blue')) return { colorClass: 'text-blue-600', bgClass: 'bg-blue-50 border-blue-200' };
+    if (name.includes('silver')) return { colorClass: 'text-slate-600', bgClass: 'bg-slate-50 border-slate-300' };
+    if (name.includes('gold')) return { colorClass: 'text-amber-600', bgClass: 'bg-amber-50 border-amber-300' };
+    if (name.includes('platinum')) return { colorClass: 'text-indigo-600', bgClass: 'bg-indigo-50 border-indigo-200' };
+    return { colorClass: 'text-gray-600', bgClass: 'bg-gray-50 border-gray-200' }; 
+  };
+
+  const currentTierIndex = tiers.findIndex(t => t.id_tier === userData?.id_tier);
+  const nextTier = tiers[currentTierIndex + 1];
+  const currentMiles = userData?.total_miles || 0;
+  const milesToNextTier = nextTier ? Math.max(0, nextTier.minimal_tier_miles - currentMiles) : 0;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -80,21 +60,21 @@ export default function InfoTier() {
         {/* Header */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Informasi Tier Membership</h1>
-          <p className="text-gray-600 text-sm">Pelajari berbagai keuntungan eksklusif di setiap tingkatan AeroMiles.</p>
+          <p className="text-gray-600 text-sm">Pelajari berbagai syarat untuk mencapai tingkatan eksklusif AeroMiles.</p>
           
           <div className="mt-6 p-4 bg-gray-900 rounded-lg flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-white">
+            <div className="text-white text-center md:text-left">
               <p className="text-sm text-gray-400">Tier Anda saat ini:</p>
-              <p className="text-3xl font-bold">{user.tier}</p>
+              <p className="text-3xl font-bold">{userData?.id_tier || 'Tidak diketahui'}</p>
             </div>
             
             {nextTier ? (
-              <div className="text-right bg-gray-800 p-3 rounded border border-gray-700">
-                <p className="text-xs text-gray-400 mb-1">Dibutuhkan untuk mencapai <span className="font-bold text-white">{nextTier.name}</span>:</p>
-                <p className="text-lg font-bold text-blue-400">{milesToNextTier.toLocaleString()} Tier Miles</p>
+              <div className="text-center md:text-right bg-gray-800 p-3 rounded border border-gray-700">
+                <p className="text-xs text-gray-400 mb-1">Dibutuhkan untuk mencapai <span className="font-bold text-white">{nextTier.nama}</span>:</p>
+                <p className="text-lg font-bold text-blue-400">{milesToNextTier.toLocaleString('id-ID')} Tier Miles</p>
               </div>
             ) : (
-              <div className="text-right bg-gradient-to-r from-amber-500 to-yellow-500 p-3 rounded">
+              <div className="text-center bg-gradient-to-r from-amber-500 to-yellow-500 p-3 rounded">
                 <p className="text-sm font-bold text-white">🎉 Anda berada di Tier Tertinggi!</p>
               </div>
             )}
@@ -103,12 +83,14 @@ export default function InfoTier() {
 
         {/* Daftar Tier */}
         <div className="space-y-4">
-          {tierData.map((tier, idx) => {
-            const isCurrentTier = tier.name === user.tier;
+          {tiers.map((tier, idx) => {
+            const isCurrentTier = tier.id_tier === userData?.id_tier;
+            const uiConfig = getUIConfig(tier.nama);
+            
             return (
               <div 
                 key={idx} 
-                className={`relative overflow-hidden rounded-xl border-2 transition-all ${tier.bgClass} ${isCurrentTier ? 'ring-2 ring-blue-500 ring-offset-2 transform scale-[1.01] shadow-md' : 'shadow-sm opacity-90'}`}
+                className={`relative overflow-hidden rounded-xl border-2 transition-all ${uiConfig.bgClass} ${isCurrentTier ? 'ring-2 ring-blue-500 ring-offset-2 transform scale-[1.01] shadow-md' : 'shadow-sm opacity-90'}`}
               >
                 {isCurrentTier && (
                   <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg z-10">
@@ -117,31 +99,33 @@ export default function InfoTier() {
                 )}
                 
                 <div className="flex flex-col md:flex-row">
-                  {/* Bagian Kiri (Syarat) */}
-                  <div className="p-6 border-b md:border-b-0 md:border-r border-gray-200/50 md:w-1/3 flex flex-col justify-center">
-                    <h2 className={`text-3xl font-black mb-4 ${tier.colorClass}`}>{tier.name}</h2>
-                    <div className="space-y-2">
+                  {/* Bagian Kiri (Syarat dari DB) */}
+                  <div className="p-6 md:w-1/2 flex flex-col justify-center bg-white/40">
+                    <h2 className={`text-3xl font-black mb-4 ${uiConfig.colorClass}`}>{tier.nama}</h2>
+                    <div className="space-y-4">
                       <div>
                         <p className="text-xs text-gray-500 uppercase font-semibold">Minimal Frekuensi Terbang</p>
-                        <p className="font-bold text-gray-900">{tier.minFlights} Penerbangan</p>
+                        <p className="font-bold text-gray-900 text-xl">{tier.minimal_frekuensi_terbang} Kali</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 uppercase font-semibold">Minimal Tier Miles</p>
-                        <p className="font-bold text-gray-900">{tier.minMiles.toLocaleString()} Miles</p>
+                        <p className="text-xs text-gray-500 uppercase font-semibold">Minimal Total Miles</p>
+                        <p className="font-bold text-gray-900 text-xl">{tier.minimal_tier_miles.toLocaleString('id-ID')} Miles</p>
                       </div>
                     </div>
                   </div>
                   
                   {/* Bagian Kanan (Keuntungan) */}
-                  <div className="p-6 md:w-2/3 bg-white/60">
+                  <div className="p-6 md:w-1/2 bg-white/80 border-l border-white">
                     <h3 className="text-sm font-bold text-gray-800 mb-3">Keuntungan Utama:</h3>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {tier.benefits.map((benefit, bIdx) => (
-                        <li key={bIdx} className="flex items-start gap-2">
-                          <span className="text-green-500 mt-0.5">✓</span>
-                          <span className="text-sm text-gray-700">{benefit}</span>
-                        </li>
-                      ))}
+                    <ul className="space-y-3">
+                      <li className="flex items-start gap-2">
+                        <span className="text-green-500 mt-0.5">✓</span>
+                        <span className="text-sm text-gray-700">Persyaratan tercapai pada <strong>{tier.minimal_tier_miles.toLocaleString('id-ID')} Total Miles</strong>.</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-green-500 mt-0.5">✓</span>
+                        <span className="text-sm text-gray-700">Dapatkan keuntungan eksklusif tambahan saat naik ke tier <strong>{tier.nama}</strong>.</span>
+                      </li>
                     </ul>
                   </div>
                 </div>
