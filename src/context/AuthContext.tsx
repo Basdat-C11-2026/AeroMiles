@@ -39,7 +39,7 @@ interface RegisterData extends Partial<User> {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>; 
   register: (role: 'member' | 'staff', data: RegisterData) => Promise<void>;
   logout: () => void;
   updateProfile: (updatedData: Partial<User>, currentPassword?: string, newPassword?: string) => Promise<void>;
@@ -118,6 +118,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setUser(loggedInUser);
       localStorage.setItem('user', JSON.stringify(loggedInUser));
+
+      return loggedInUser;
     } finally {
       setIsLoading(false);
     }

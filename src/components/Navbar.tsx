@@ -19,7 +19,7 @@ export default function Navbar() {
 
   // Daftar menu utama untuk masing-masing role
   const memberLinks = [
-    { name: 'Dashboard', href: '/member/dashboard' },
+    { name: 'Dashboard', href: '/member' },
     { name: 'Identitas Saya', href: '/member/identities' },
     { name: 'Klaim Miles', href: '/member/claims' },
     { name: 'Transfer Miles', href: '/member/transfers' },
@@ -29,7 +29,7 @@ export default function Navbar() {
   ];
 
   const staffLinks = [
-    { name: 'Dashboard', href: '/staff/dashboard' },
+    { name: 'Dashboard', href: '/staff' },
     { name: 'Kelola Member', href: '/staff/members' },
     { name: 'Kelola Klaim', href: '/staff/claims' },
     { name: 'Kelola Hadiah', href: '/staff/rewards' },

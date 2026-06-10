@@ -19,8 +19,14 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      router.push('/');
+      const loggedInUser = await login(email, password);
+
+      if (loggedInUser.role === 'staff') {
+        router.push('/staff');
+      } else if (loggedInUser.role === 'member') {
+        router.push('/member');
+      } 
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal login');
     } finally {
@@ -41,7 +47,7 @@ export default function LoginForm() {
             <h1 className="text-3xl font-bold text-gray-900">AeroMiles</h1>
             <p className="text-gray-600 mt-2">Masuk ke akun Anda</p>
           </div>
-          
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Error Alert */}

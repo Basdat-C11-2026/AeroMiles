@@ -30,20 +30,20 @@ export async function middleware(req: NextRequest) {
 
   if (isAuthRoute) {
     if (payload.role === 'Member') {
-      return NextResponse.redirect(new URL('/member/dashboard', req.url));
+      return NextResponse.redirect(new URL('/member', req.url));
     }
     if (payload.role === 'Staf') {
-      return NextResponse.redirect(new URL('/staff/dashboard', req.url));
+      return NextResponse.redirect(new URL('/staff', req.url));
     }
   }
 
   // Cross-role protection
   if (isMemberRoute && payload.role !== 'Member') {
-    return NextResponse.redirect(new URL('/staff/dashboard', req.url));
+    return NextResponse.redirect(new URL('/staff', req.url));
   }
 
   if (isStaffRoute && payload.role !== 'Staf') {
-    return NextResponse.redirect(new URL('/member/dashboard', req.url));
+    return NextResponse.redirect(new URL('/member', req.url));
   }
 
   return NextResponse.next();
