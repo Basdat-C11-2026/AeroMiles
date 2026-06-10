@@ -1,9 +1,9 @@
 import pool from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function PUT(req: NextRequest, { params }: { params: { nomor: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ nomor: string }> }) {
   try {
-    const { nomor } = params;
+    const { nomor } = await params;
     const { tanggal_habis, tanggal_terbit, negara_penerbit, jenis } = await req.json();
 
     await pool.query(
@@ -19,9 +19,9 @@ export async function PUT(req: NextRequest, { params }: { params: { nomor: strin
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { nomor: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ nomor: string }> }) {
   try {
-    const { nomor } = params;
+    const { nomor } = await params;
 
     await pool.query('DELETE FROM IDENTITAS WHERE nomor = $1', [nomor]);
 

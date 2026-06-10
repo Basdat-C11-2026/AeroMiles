@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 
-// Interface untuk Dokumen Identitas
+// Interface diselaraskan dengan kebutuhan UI, namun nanti di-mapping dari DB
 interface IdentityDocument {
-  id: string;
+  id: string; // Kita akan menggunakan 'nomor' dokumen sebagai ID
   documentNumber: string;
   type: 'Paspor' | 'KTP' | 'SIM' | '';
   issueCountry: string;
@@ -14,30 +14,11 @@ interface IdentityDocument {
   expiryDate: string;
 }
 
-// Data Dummy Awal
-const initialDocuments: IdentityDocument[] = [
-  {
-    id: '1',
-    documentNumber: 'A1234567',
-    type: 'Paspor',
-    issueCountry: 'Indonesia',
-    issueDate: '2020-05-15',
-    expiryDate: '2025-05-15',
-  },
-  {
-    id: '2',
-    documentNumber: '3171234567890001',
-    type: 'KTP',
-    issueCountry: 'Indonesia',
-    issueDate: '2015-01-01',
-    expiryDate: '2099-12-31', 
-  }
-];
-
 export default function ManajemenIdentitasMember() {
   const { user } = useAuth();
   
-  const [documents, setDocuments] = useState<IdentityDocument[]>(initialDocuments);
+  const [documents, setDocuments] = useState<IdentityDocument[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,6 +30,41 @@ export default function ManajemenIdentitasMember() {
     id: '', documentNumber: '', type: '', issueCountry: '', issueDate: '', expiryDate: ''
   };
   const [formData, setFormData] = useState<IdentityDocument>(defaultForm);
+
+  // --- Data Fetching ---
+  const fetchIdentities = async () => {
+    if (!user?.email) return;
+    
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/member/identities?email=${encodeURIComponent(user.email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        
+        // Mapping kolom database (tabel 'identitas') ke interface IdentityDocument
+        const mappedData: IdentityDocument[] = data.map((item: any) => ({
+          id: item.nomor, // Menggunakan nomor dokumen sebagai ID unik
+          documentNumber: item.nomor,
+          type: item.jenis,
+          issueCountry: item.negara_penerbit,
+          issueDate: new Date(item.tanggal_terbit).toISOString().split('T')[0],
+          expiryDate: new Date(item.tanggal_habis).toISOString().split('T')[0],
+        }));
+        
+        setDocuments(mappedData);
+      }
+    } catch (error) {
+      console.error("Gagal mengambil data identitas", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.role === 'member') {
+      fetchIdentities();
+    }
+  }, [user]);
 
   // Akses Guard: Hanya untuk Member
   if (user?.role !== 'member') {
@@ -84,13 +100,23 @@ export default function ManajemenIdentitasMember() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string, docNumber: string) => {
+  const handleDelete = async (id: string, docNumber: string) => {
     if (window.confirm(`Apakah Anda yakin ingin menghapus dokumen identitas nomor ${docNumber}?`)) {
-      setDocuments(documents.filter(d => d.id !== id));
+      try {
+        const res = await fetch(`/api/member/identities/${docNumber}`, { 
+          method: 'DELETE' 
+        });
+        
+        if (!res.ok) throw new Error("Gagal menghapus");
+        
+        await fetchIdentities(); 
+      } catch (error) {
+        alert("Gagal menghapus dokumen identitas.");
+      }
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -100,30 +126,51 @@ export default function ManajemenIdentitasMember() {
       return;
     }
 
-    if (isEditing) {
-      // Logic Update
-      setDocuments(documents.map(d => d.id === formData.id ? formData : d));
-      alert('Dokumen identitas berhasil diperbarui!');
-    } else {
-      // Logic Create (Termasuk Cek Nomor Dokumen Unik)
-      const isDuplicate = documents.some(d => d.documentNumber.toLowerCase() === formData.documentNumber.toLowerCase());
-      if (isDuplicate) {
-        setErrorMsg('Nomor dokumen ini sudah terdaftar dalam sistem.');
-        return;
+    // Siapkan Payload sesuai kolom di tabel 'identitas'
+    const payload = {
+      email_member: user?.email,
+      nomor: formData.documentNumber,
+      jenis: formData.type,
+      negara_penerbit: formData.issueCountry,
+      tanggal_terbit: formData.issueDate,
+      tanggal_habis: formData.expiryDate
+    };
+
+    try {
+      let res;
+      if (isEditing) {
+        res = await fetch(`/api/member/identities/${formData.documentNumber}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        res = await fetch('/api/member/identities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
       }
 
-      const newDoc = { ...formData, id: Date.now().toString() };
-      setDocuments([...documents, newDoc]);
-      alert('Dokumen identitas baru berhasil ditambahkan!');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Gagal menyimpan data.');
+      }
+
+      alert(`Dokumen identitas berhasil ${isEditing ? 'diperbarui' : 'ditambahkan'}!`);
+      await fetchIdentities();
+      setIsModalOpen(false);
+
+    } catch (error: any) {
+      setErrorMsg(error.message || 'Nomor dokumen mungkin sudah terdaftar dalam sistem.');
     }
-    
-    setIsModalOpen(false);
   };
 
   // Helper untuk mengecek status expired
   const isExpired = (expiryDateStr: string) => {
     const expiry = new Date(expiryDateStr);
     const today = new Date();
+    today.setHours(0,0,0,0); // Normalisasi waktu hari ini
     return expiry < today;
   };
 
@@ -147,51 +194,62 @@ export default function ManajemenIdentitasMember() {
 
         {/* Tabel Data Identitas */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 text-gray-600 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-4 font-semibold">Jenis</th>
-                <th className="px-6 py-4 font-semibold">Nomor Dokumen</th>
-                <th className="px-6 py-4 font-semibold">Negara Penerbit</th>
-                <th className="px-6 py-4 font-semibold">Tanggal Terbit</th>
-                <th className="px-6 py-4 font-semibold">Berlaku Hingga</th>
-                <th className="px-6 py-4 font-semibold">Status</th>
-                <th className="px-6 py-4 font-semibold text-center">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {documents.map((doc) => {
-                const expired = isExpired(doc.expiryDate);
-                return (
-                  <tr key={doc.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-gray-900">{doc.type}</td>
-                    <td className="px-6 py-4 text-gray-700 font-mono">{doc.documentNumber}</td>
-                    <td className="px-6 py-4 text-gray-600">{doc.issueCountry}</td>
-                    <td className="px-6 py-4 text-gray-600">{doc.issueDate}</td>
-                    <td className="px-6 py-4 text-gray-600">{doc.expiryDate}</td>
-                    <td className="px-6 py-4">
-                      {expired ? (
-                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">Kedaluwarsa</span>
-                      ) : (
-                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Aktif</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 flex justify-center gap-3">
-                      <button onClick={() => handleOpenEdit(doc)} className="text-blue-600 hover:text-blue-800" title="Edit">✏️</button>
-                      <button onClick={() => handleDelete(doc.id, doc.documentNumber)} className="text-red-600 hover:text-red-800" title="Hapus">🗑️</button>
+          {isLoading ? (
+            <div className="p-8 text-center text-gray-500">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+              <p>Memuat dokumen identitas...</p>
+            </div>
+          ) : (
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-50 text-gray-600 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-4 font-semibold">Jenis</th>
+                  <th className="px-6 py-4 font-semibold">Nomor Dokumen</th>
+                  <th className="px-6 py-4 font-semibold">Negara Penerbit</th>
+                  <th className="px-6 py-4 font-semibold">Tanggal Terbit</th>
+                  <th className="px-6 py-4 font-semibold">Berlaku Hingga</th>
+                  <th className="px-6 py-4 font-semibold">Status</th>
+                  <th className="px-6 py-4 font-semibold text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {documents.map((doc) => {
+                  const expired = isExpired(doc.expiryDate);
+                  return (
+                    <tr key={doc.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-gray-900">{doc.type}</td>
+                      <td className="px-6 py-4 text-gray-700 font-mono">{doc.documentNumber}</td>
+                      <td className="px-6 py-4 text-gray-600">{doc.issueCountry}</td>
+                      <td className="px-6 py-4 text-gray-600">
+                        {new Date(doc.issueDate).toLocaleDateString('id-ID')}
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">
+                        {new Date(doc.expiryDate).toLocaleDateString('id-ID')}
+                      </td>
+                      <td className="px-6 py-4">
+                        {expired ? (
+                          <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">Kedaluwarsa</span>
+                        ) : (
+                          <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Aktif</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 flex justify-center gap-3">
+                        <button onClick={() => handleOpenEdit(doc)} className="text-blue-600 hover:text-blue-800" title="Edit">✏️</button>
+                        <button onClick={() => handleDelete(doc.id, doc.documentNumber)} className="text-red-600 hover:text-red-800" title="Hapus">🗑️</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {documents.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                      Belum ada dokumen identitas yang didaftarkan.
                     </td>
                   </tr>
-                );
-              })}
-              {documents.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                    Belum ada dokumen identitas yang didaftarkan.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
@@ -234,7 +292,7 @@ export default function ManajemenIdentitasMember() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Dokumen</label>
                     <input 
                       type="text" required 
-                      disabled={isEditing} // Aturan: Nomor dokumen tidak dapat diubah
+                      disabled={isEditing} // Aturan: Nomor dokumen (Primary Key) tidak dapat diubah
                       value={formData.documentNumber} 
                       onChange={e => setFormData({...formData, documentNumber: e.target.value})}
                       className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-black outline-none ${isEditing ? 'bg-gray-100 cursor-not-allowed text-gray-500' : 'focus:ring-2 focus:ring-blue-500'}`} 
