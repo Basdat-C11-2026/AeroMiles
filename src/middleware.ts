@@ -1,19 +1,17 @@
+// src/middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 
-// 1. Definisikan interface untuk payload token agar role-based access aman
 interface JWTPayload {
   email: string;
-  role: 'Member' | 'Staf';
-  // tambahkan field lain jika ada dalam token Anda
+  role: string; // Ubah ke string biasa agar lebih fleksibel saat dicek
 }
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   
   const sessionCookie = req.cookies.get('session')?.value;
-  
   const payload = sessionCookie ? await verifyToken(sessionCookie) as JWTPayload : null;
 
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register');
@@ -28,21 +26,23 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  const userRole = payload.role.toLowerCase();
+
   if (isAuthRoute) {
-    if (payload.role === 'Member') {
+    if (userRole === 'member') {
       return NextResponse.redirect(new URL('/member', req.url));
     }
-    if (payload.role === 'Staf') {
+    if (userRole === 'staf' || userRole === 'staff') {
       return NextResponse.redirect(new URL('/staff', req.url));
     }
   }
 
   // Cross-role protection
-  if (isMemberRoute && payload.role !== 'Member') {
+  if (isMemberRoute && userRole !== 'member') {
     return NextResponse.redirect(new URL('/staff', req.url));
   }
 
-  if (isStaffRoute && payload.role !== 'Staf') {
+  if (isStaffRoute && (userRole !== 'staf' && userRole !== 'staff')) {
     return NextResponse.redirect(new URL('/member', req.url));
   }
 
