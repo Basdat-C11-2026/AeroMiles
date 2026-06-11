@@ -17,15 +17,32 @@ type Penyedia = {
     nama: string;
 };
 
-
 export default function Page() {
     const [createOpen, setOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
-    const [selected, setSelected] = useState<Reward | null>(null); // row being edited/deleted
+    const [selected, setSelected] = useState<Reward | null>(null);
     const [data, setData] = useState<Reward[]>([]);
     const [penyediaList, setPenyediaList] = useState<Penyedia[]>([]);
     const [idPenyedia, setIdPenyedia] = useState<string>("");
+    const [filterPenyedia, setFilterPenyedia] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
+
+    const isExpired = (end: string) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return new Date(end) < today;
+    };
+
+    const filteredData = data.filter((item) => {
+        const matchPenyedia = filterPenyedia === '' || item.id_penyedia === filterPenyedia;
+
+        let matchStatus = true;
+        if (filterStatus === 'aktif') matchStatus = !isExpired(item.program_end);
+        if (filterStatus === 'expired') matchStatus = isExpired(item.program_end);
+
+        return matchPenyedia && matchStatus;
+    });
 
     const formatDate = (d: Date) =>
         new Date(d.getTime() - d.getTimezoneOffset() * 60000)
@@ -34,13 +51,6 @@ export default function Page() {
 
     const isValidDateRange = (start: string, end: string) => {
         return new Date(start) <= new Date(end);
-    };
-
-    const isExpired = (end: string) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        return new Date(end) < today;
     };
 
     useEffect(() => {
@@ -68,8 +78,9 @@ export default function Page() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
             {/* Dashboard */}
             <div className="max-w-7xl mx-auto text-gray-900">
+                
                 {/* Header */}
-                <div className="flex flex-col md:flex-row space-x-8 space-y-2 mb-8">
+                <div className="flex flex-col md:flex-row space-x-8 space-y-2 mb-6 items-center justify-between">
                     <h1 className="text-3xl sm:text-4xl font-bold">
                         Kelola Hadiah & Penyedia
                     </h1>
@@ -80,6 +91,38 @@ export default function Page() {
                     >
                         Tambah Hadiah +
                     </button>
+                </div>
+
+                {/* Filter Section */}
+                <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                    <div className="w-full md:w-1/3">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Filter Penyedia</label>
+                        <select
+                            className="select select-bordered w-full text-sm"
+                            value={filterPenyedia}
+                            onChange={(e) => setFilterPenyedia(e.target.value)}
+                        >
+                            <option value="">Semua Penyedia</option>
+                            {penyediaList.map((p) => (
+                                <option key={p.id_penyedia} value={p.id_penyedia}>
+                                    {p.nama}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="w-full md:w-1/3">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Status Keaktifan</label>
+                        <select
+                            className="select select-bordered w-full text-sm"
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                        >
+                            <option value="">Semua Status</option>
+                            <option value="aktif">Masih Aktif</option>
+                            <option value="expired">Sudah Expired</option>
+                        </select>
+                    </div>
                 </div>
 
                 {/* Table */}
@@ -97,14 +140,15 @@ export default function Page() {
                             </tr>
                         </thead>
                         <tbody>
-                            {data.map((entry, idx) => (<tr key={idx} className="hover:bg-base-300">
+                            {filteredData.map((entry, idx) => (<tr key={idx} className="hover:bg-base-300">
                                 <td>{entry.kode_hadiah}</td>
                                 <td>{entry.nama}</td>
                                 <td>{entry.deskripsi}</td>
                                 <td>{entry.penyedia_nama}</td>
                                 <td>{entry.miles}</td>
                                 <td>
-                                    {formatDate(new Date(entry.valid_start_date))} — {formatDate(new Date(entry.program_end))}</td>
+                                    {formatDate(new Date(entry.valid_start_date))} — {formatDate(new Date(entry.program_end))}
+                                </td>
                                 <td>
                                     <div className="flex space-x-2"><button
                                         type="button"
@@ -122,21 +166,29 @@ export default function Page() {
                                             type="button"
                                             disabled={!isExpired(entry.program_end)}
                                             className={`cursor-pointer ${isExpired(entry.program_end)
-                                                ? 'text-red-700'
+                                                ? 'text-red-700 hover:text-red-800'
                                                 : 'text-gray-400 cursor-not-allowed'
                                                 }`}
                                             onClick={() => {
                                                 setSelected(entry);
                                                 setDeleteOpen(true);
                                             }}
+                                            title={!isExpired(entry.program_end) ? "Hadiah masih aktif" : "Hapus hadiah"}
                                         >
-                                            {isExpired(entry.program_end)
-                                                ? 'Delete'
-                                                : 'Belum Expired'}
+                                            Delete
                                         </button>
                                     </div>
                                 </td>
                             </tr>))}
+                            
+                            {/* Pesan jika data filter kosong */}
+                            {filteredData.length === 0 && (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                                        Tidak ada hadiah yang sesuai dengan kriteria filter.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -145,7 +197,6 @@ export default function Page() {
             {/* Create Form Modal */}
             <dialog className={`modal ${createOpen ? 'modal-open' : ''}`}>
                 <div className="modal-box bg-base-100 text-base-content">
-
                     <h3 className="font-bold text-lg mb-4">
                         Tambah Hadiah
                     </h3>
@@ -167,7 +218,6 @@ export default function Page() {
                                 program_end: form.get('end'),
                                 id_penyedia: form.get('penyedia'),
                             };
-
 
                             if (!isValidDateRange(
                                 String(body.valid_start_date),
@@ -237,11 +287,13 @@ export default function Page() {
                                 name="start"
                                 type="date"
                                 className="input input-bordered w-full"
+                                required
                             />
                             <input
                                 name="end"
                                 type="date"
                                 className="input input-bordered w-full"
+                                required
                             />
                         </div>
 
@@ -267,12 +319,11 @@ export default function Page() {
                 <form method="dialog" className="modal-backdrop">
                     <button onClick={() => setOpen(false)}>close</button>
                 </form>
-            </dialog >
+            </dialog>
 
             {/* Edit Form */}
             <dialog className={`modal ${editOpen ? 'modal-open' : ''}`}>
                 <div className="modal-box">
-
                     <h3 className="font-bold text-lg mb-4">Edit Hadiah</h3>
 
                     {selected && (
@@ -292,7 +343,6 @@ export default function Page() {
                                     program_end: form.get('end'),
                                     id_penyedia: form.get('penyedia'),
                                 };
-
 
                                 if (!isValidDateRange(
                                     String(updated.valid_start_date),
@@ -365,12 +415,14 @@ export default function Page() {
                                     type="date"
                                     defaultValue={formatDate(new Date(selected.valid_start_date))}
                                     className="input input-bordered w-full"
+                                    required
                                 />
                                 <input
                                     name="end"
                                     type="date"
                                     defaultValue={formatDate(new Date(selected.program_end))}
                                     className="input input-bordered w-full"
+                                    required
                                 />
                             </div>
 
@@ -414,6 +466,9 @@ export default function Page() {
                                     await fetchRewards();
                                     setDeleteOpen(false);
                                     setSelected(null);
+                                } else {
+                                    const err = await res.json();
+                                    alert(err.error || 'Gagal menghapus hadiah');
                                 }
                             }}
                         >
@@ -426,6 +481,6 @@ export default function Page() {
                     <button onClick={() => setDeleteOpen(false)}>close</button>
                 </form>
             </dialog>
-        </div >
+        </div>
     );
 }

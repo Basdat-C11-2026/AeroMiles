@@ -7,7 +7,7 @@ type Params = {
     }>;
 };
 
-export async function POST(req: NextRequest, { params }: Params) {
+export async function PUT(req: NextRequest, { params }: Params) {
     try {
         const { kode } = await params;
 
@@ -61,10 +61,19 @@ export async function DELETE(
     try {
         const { kode } = await params;
 
-        await pool.query(
-            `DELETE FROM HADIAH WHERE kode_hadiah = $1`,
+        const result = await pool.query(
+            `DELETE FROM HADIAH 
+             WHERE kode_hadiah = $1 AND program_end < CURRENT_DATE 
+             RETURNING *`,
             [kode]
         );
+
+        if (result.rowCount === 0) {
+            return NextResponse.json(
+                { error: 'Hadiah tidak dapat dihapus karena masih aktif atau tidak ditemukan.' },
+                { status: 400 }
+            );
+        }
 
         return NextResponse.json({
             message: 'Reward deleted',
