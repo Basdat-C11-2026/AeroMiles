@@ -32,21 +32,40 @@ export async function DELETE(
     req: NextRequest,
     { params }: Params
 ) {
+    const client = await pool.connect();
+
     try {
         const { provider_id } = await params;
 
-        await pool.query(
+        await client.query('BEGIN');
+
+        await client.query(
+            `DELETE FROM HADIAH WHERE id_penyedia = $1`,
+            [provider_id]
+        );
+
+        await client.query(
             `DELETE FROM MITRA WHERE id_penyedia = $1`,
             [provider_id]
         );
 
+        await client.query(
+            `DELETE FROM PENYEDIA WHERE id = $1`,
+            [provider_id]
+        );
+
+        await client.query('COMMIT');
+
         return NextResponse.json({
-            message: 'Mitra berhasil didelete',
+            message: 'Mitra beserta hadiah yang disediakan berhasil dihapus',
         });
     } catch (error: any) {
+        await client.query('ROLLBACK');
         return NextResponse.json(
             { error: error.message },
             { status: 500 }
         );
+    } finally {
+        client.release();
     }
 }

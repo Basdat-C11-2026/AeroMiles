@@ -5,7 +5,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const tier = searchParams.get('tier');
-    
+
     let query = `
       SELECT m.nomor_member, p.salutation, p.first_mid_name, p.last_name, 
              m.email, t.nama as tier, m.total_miles, m.award_miles, m.tanggal_bergabung 
@@ -14,14 +14,30 @@ export async function GET(req: NextRequest) {
       JOIN TIER t ON m.id_tier = t.id_tier
     `;
     const params = [];
-    
+
     if (tier) {
       query += ` WHERE t.nama = $1`;
       params.push(tier);
     }
-    
+
     const result = await pool.query(query, params);
-    return NextResponse.json(result.rows);
+    const safeRows = result.rows.map((r: any) => {
+      let salutation = (r.salutation || '').trim(); 
+
+      return {
+        nomor_member: r.nomor_member,
+        salutation,
+        first_mid_name: r.first_mid_name,
+        last_name: r.last_name,
+        email: r.email,
+        tier: r.tier,
+        total_miles: r.total_miles !== undefined && r.total_miles !== null ? Number(r.total_miles) : 0,
+        award_miles: r.award_miles !== undefined && r.award_miles !== null ? Number(r.award_miles) : 0,
+        tanggal_bergabung: r.tanggal_bergabung ? (new Date(r.tanggal_bergabung)).toISOString().split('T')[0] : null,
+      };
+    });
+
+    return NextResponse.json(safeRows);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

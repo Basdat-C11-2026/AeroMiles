@@ -12,7 +12,7 @@ export default function Page() {
     const [createOpen, setOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
-    const [selected, setSelected] = useState<Mitra | null>(null); // row being edited/deleted
+    const [selected, setSelected] = useState<Mitra | null>(null); 
     const [data, setData] = useState<Mitra[]>([]);
 
     const formatDate = (d: Date) =>
@@ -131,6 +131,10 @@ export default function Page() {
                                 await fetchMitra();
                                 formElement.reset();
                                 setOpen(false);
+                            } else {
+                                const errorData = await res.json();
+                                alert(`Gagal menyimpan: ${errorData.error}`);
+                                console.error("Detail Error: ", errorData);
                             }
                         }}
                     >
