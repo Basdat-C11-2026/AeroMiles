@@ -17,7 +17,6 @@ export default function Navbar() {
     setIsProfileOpen(false);
   };
 
-  // Daftar menu utama untuk masing-masing role
   const memberLinks = [
     { name: 'Dashboard', href: '/member' },
     { name: 'Identitas Saya', href: '/member/identities' },
@@ -91,7 +90,9 @@ export default function Navbar() {
                         <>
                           <Link href="/member/identities" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">🪪 Identitas Saya</Link>
                           <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">⚙️ Pengaturan Profil</Link>
-                          <div className="block px-4 py-2 text-sm text-gray-700 bg-blue-50/50">💰 {(user.totalMiles || 0).toLocaleString()} Miles</div>
+                          <div className="block px-4 py-2 text-sm text-gray-700 bg-blue-50/50 font-medium">
+                            💰 {(user.awardMiles || 0).toLocaleString('id-ID')} Award Miles
+                          </div>
                         </>
                       ) : (
                         <>
