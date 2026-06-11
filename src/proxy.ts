@@ -1,16 +1,15 @@
-// src/middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 
 interface JWTPayload {
   email: string;
-  role: string; // Ubah ke string biasa agar lebih fleksibel saat dicek
+  role: string;
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  
+
   const sessionCookie = req.cookies.get('session')?.value;
   const payload = sessionCookie ? await verifyToken(sessionCookie) as JWTPayload : null;
 
@@ -37,7 +36,6 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Cross-role protection
   if (isMemberRoute && userRole !== 'member') {
     return NextResponse.redirect(new URL('/staff', req.url));
   }
