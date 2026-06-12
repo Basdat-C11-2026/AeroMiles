@@ -50,12 +50,11 @@ export async function GET(req: NextRequest) {
         const resTopMiles = await pool.query(`
             SELECT 
                 p.first_mid_name || ' ' || p.last_name as name, 
-                m.total_miles as "totalMiles", 
+                t.total_miles as "totalMiles", 
                 m.id_tier as tier 
-            FROM MEMBER m 
-            JOIN PENGGUNA p ON m.email = p.email 
-            ORDER BY m.total_miles DESC 
-            LIMIT 5
+            FROM get_top_5_members() t
+            JOIN PENGGUNA p ON t.email = p.email
+            JOIN MEMBER m ON t.email = m.email
         `);
 
         const resTopActive = await pool.query(`

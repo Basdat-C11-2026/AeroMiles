@@ -48,38 +48,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email dan ID Paket wajib diisi.' }, { status: 400 });
     }
 
-    await pool.query('BEGIN');
-
-    const pkgResult = await pool.query(
-      'SELECT jumlah_award_miles FROM AWARD_MILES_PACKAGE WHERE id = $1',
-      [id_paket]
-    );
-
-    if (pkgResult.rows.length === 0) {
-      await pool.query('ROLLBACK');
-      return NextResponse.json({ error: 'Paket tidak ditemukan.' }, { status: 404 });
-    }
-
-    const milesToAdded = pkgResult.rows[0].jumlah_award_miles;
-
     await pool.query(
       'INSERT INTO MEMBER_AWARD_MILES_PACKAGE (id_award_miles_package, email_member, timestamp) VALUES ($1, $2, CURRENT_TIMESTAMP)',
       [id_paket, email]
     );
 
-    await pool.query(
-      `UPDATE MEMBER 
-       SET award_miles = award_miles + $1, 
-           total_miles = total_miles + $1 
-       WHERE email = $2`,
-      [milesToAdded, email]
-    );
-
-    await pool.query('COMMIT');
-
     return NextResponse.json({ message: 'Pembelian paket berhasil' }, { status: 201 });
   } catch (error: any) {
-    await pool.query('ROLLBACK');
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }
