@@ -73,11 +73,6 @@ export async function POST(req: NextRequest) {
       throw new Error(`Award miles tidak mencukupi. (Dibutuhkan: ${requiredMiles}, Tersedia: ${currentMiles})`);
     }
 
-    await client.query(
-      'UPDATE member SET award_miles = award_miles - $1 WHERE email = $2',
-      [requiredMiles, email_member]
-    );
-
     const res = await client.query(
       'INSERT INTO REDEEM (email_member, kode_hadiah, timestamp) VALUES ($1, $2, CURRENT_TIMESTAMP) RETURNING *',
       [email_member, kode_hadiah]

@@ -34,3 +34,17 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Database Triggers
+
+Trigger dan stored function AeroMiles yang terintegrasi ke aplikasi berada di [database/aeromiles_triggers.sql](database/aeromiles_triggers.sql).
+
+Skrip ini mencakup validasi email registrasi, verifikasi login, transfer miles, redeem hadiah, pembelian package, klaim missing miles, pembaruan tier, dan top 5 member untuk laporan staf.
+
+Setelah skrip dijalankan ke database PostgreSQL AeroMiles, route berikut akan memakai trigger sebagai sumber utama perubahan saldo:
+
+- `/api/member/packages`
+- `/api/member/redeem`
+- `/api/member/transfers`
+- `/api/staff/claims/[id]/status`
+- `/api/staff/reports` untuk pembacaan top 5 member

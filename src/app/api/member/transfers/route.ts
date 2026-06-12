@@ -49,13 +49,13 @@ export async function POST(req: NextRequest) {
     }
 
     const senderCheck = await client.query('SELECT award_miles FROM member WHERE email = $1', [email_pengirim]);
+    if (senderCheck.rows.length === 0) {
+      throw new Error('Email pengirim tidak terdaftar sebagai Member AeroMiles.');
+    }
+
     if (senderCheck.rows[0].award_miles < jumlah) {
       throw new Error('Award miles Anda tidak mencukupi untuk transfer ini.');
     }
-
-    await client.query('UPDATE member SET award_miles = award_miles - $1 WHERE email = $2', [jumlah, email_pengirim]);
-
-    await client.query('UPDATE member SET award_miles = award_miles + $1 WHERE email = $2', [jumlah, email_penerima]);
 
     const res = await client.query(
       `INSERT INTO TRANSFER (email_member_1, email_member_2, jumlah, catatan, timestamp) 
