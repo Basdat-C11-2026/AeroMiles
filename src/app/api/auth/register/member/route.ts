@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Registrasi Member berhasil.' }, { status: 201 });
   } catch (error: any) {
     await client.query('ROLLBACK');
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 400 });
   } finally {
     client.release();
   }
