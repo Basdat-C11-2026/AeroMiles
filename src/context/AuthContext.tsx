@@ -5,12 +5,12 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 interface User {
   id: string;
   email: string;
-  name: string; 
+  name: string;
   role: 'member' | 'staff';
-  phone: string; 
+  phone: string;
   nationality: string;
   birthDate: string;
-  
+
   // Spesifik Member
   memberNumber?: string;
   tier?: string;
@@ -21,16 +21,26 @@ interface User {
   // Spesifik Staf
   staffId?: string;
   airline?: string;
-  
-  
-  password?: string; 
+
+  password?: string;
+}
+
+interface RegisterData extends Partial<User> {
+  salutation?: string;
+  first_mid_name?: string;
+  last_name?: string;
+  country_code?: string;
+  mobile_number?: string;
+  tanggal_lahir?: string;
+  kewarganegaraan?: string;
+  kode_maskapai?: string; // Khusus staf
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>; 
+  register: (role: 'member' | 'staff', data: RegisterData) => Promise<void>;
   logout: () => void;
   updateProfile: (updatedData: Partial<User>, currentPassword?: string, newPassword?: string) => Promise<void>;
   isAuthenticated: boolean;
@@ -40,92 +50,119 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  // Biarkan isLoading tetap true di awal
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Sinkronisasi sinkron (blocking) untuk mencegah flicker/redirect
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
       } catch (error) {
         console.error('Error parsing stored user:', error);
+        localStorage.removeItem('user'); // Bersihkan jika data korup
       }
     }
+    // Set loading false hanya SETELAH pengecekan localStorage selesai
     setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
       if (!email || !password) throw new Error('Email dan password harus diisi');
 
-      const isStaff = email.endsWith('@aeromiles.com');
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-      const mockUser: User = {
-        id: Date.now().toString(),
-        email,
-        password: password, 
-        name: isStaff ? `Mr. Staff ${email.split('@')[0]}` : 'Mr. John Doe',
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Terjadi kesalahan saat login');
+      }
+
+      const isStaff = data.role === 'Staf';
+
+      const loggedInUser: User = {
+        id: data.user.email,
+        email: data.user.email,
+
+        name: `${data.user.first_mid_name} ${data.user.last_name}`,
+
         role: isStaff ? 'staff' : 'member',
-        phone: '+62 81234567890',
-        nationality: 'Indonesia',
-        birthDate: '1990-01-15',
+
+        phone: `${data.user.country_code} ${data.user.mobile_number}`,
+
+        nationality: data.user.kewarganegaraan,
+        birthDate: data.user.tanggal_lahir,
+
         ...(isStaff
           ? {
-              staffId: 'STF-00123',
-              airline: 'Garuda Indonesia',
-            }
+            staffId: data.staffData?.id_staf,
+            airline: data.staffData?.kode_maskapai,
+          }
           : {
-              memberNumber: 'AM-98765432',
-              tier: 'Gold',
-              totalMiles: 245850,
-              awardMiles: 150000,
-              joinDate: '2022-05-20',
-            }),
+            memberNumber: data.memberData?.nomor_member,
+            tier: data.memberData?.id_tier,
+            totalMiles: data.memberData?.total_miles,
+            awardMiles: data.memberData?.award_miles,
+            joinDate: data.memberData?.tanggal_bergabung,
+          }),
       };
+      setUser(loggedInUser);
+      localStorage.setItem('user', JSON.stringify(loggedInUser));
 
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      return loggedInUser;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (role: 'member' | 'staff', data: RegisterData) => {
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      if (!name || !email || !password) throw new Error('Semua field harus diisi');
-      if (password.length < 6) throw new Error('Password minimal 6 karakter');
+      const endpoint = role === 'member'
+        ? '/api/auth/register/member'
+        : '/api/auth/register/staff';
 
-      const existingEmails = ['admin@aeromiles.com', 'member@test.com'];
-      if (existingEmails.includes(email.toLowerCase())) {
-        throw new Error('Email sudah terdaftar. Silakan gunakan email lain.');
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Gagal melakukan registrasi');
       }
+
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Gagal memanggil API logout:', error);
+    } finally {
+      setUser(null);
+      localStorage.removeItem('user');
+    }
   };
 
-  // Fungsi Update Profil Baru
   const updateProfile = async (updatedData: Partial<User>, currentPassword?: string, newPassword?: string) => {
     if (!user) throw new Error('User not logged in');
-
-    await new Promise(resolve => setTimeout(resolve, 800)); // Simulasi API call
-
-    // Simulasi ganti password
-    if (currentPassword && newPassword) {
-      if (user.password !== currentPassword) {
-        throw new Error('Password lama tidak sesuai.');
-      }
-      updatedData.password = newPassword;
-    }
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     const newUser = { ...user, ...updatedData };
     setUser(newUser);
@@ -133,7 +170,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateProfile, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        login,
+        register,
+        logout,
+        updateProfile,
+        isAuthenticated: !!user
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
