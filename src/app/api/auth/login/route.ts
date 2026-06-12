@@ -10,34 +10,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email dan password wajib diisi.' }, { status: 400 });
     }
 
-    const userQuery = await pool.query(
+    const authCheck = await pool.query(
       'SELECT * FROM verifikasi_login($1, $2)', [email, password]
     );
+    
+    const role = authCheck.rows[0].role; // 'Member' atau 'Staf'
 
-    if (userQuery.rows.length === 0) {
-      return NextResponse.json({ error: 'Email atau password salah, silakan coba lagi.' }, { status: 401 });
-    }
+    const penggunaQuery = await pool.query('SELECT * FROM PENGGUNA WHERE email = $1', [email]);
+    const userData = penggunaQuery.rows[0];
 
-    const userData = userQuery.rows[0];
-    let role: 'Member' | 'Staf' | null = null;
     let extraData = {};
 
-    // Cek Role Member
-    const memberQuery = await pool.query('SELECT * FROM MEMBER WHERE email = $1', [email]);
-    if (memberQuery.rows.length > 0) {
-      role = 'Member';
+    if (role === 'Member') {
+      const memberQuery = await pool.query('SELECT * FROM MEMBER WHERE email = $1', [email]);
       extraData = { memberData: memberQuery.rows[0] };
-    } else {
-      // Cek Role Staf
+    } else if (role === 'Staf') {
       const staffQuery = await pool.query('SELECT * FROM STAF WHERE email = $1', [email]);
-      if (staffQuery.rows.length > 0) {
-        role = 'Staf';
-        extraData = { staffData: staffQuery.rows[0] };
-      }
-    }
-
-    if (!role) {
-      return NextResponse.json({ error: 'Role tidak ditemukan.' }, { status: 403 });
+      extraData = { staffData: staffQuery.rows[0] };
     }
 
     const response = NextResponse.json({
@@ -62,9 +51,10 @@ export async function POST(req: NextRequest) {
 
     return response;
 
-  } catch (error) {
-    let errorMessage = 'Terjadi kesalahan server';
-    if (error instanceof Error) errorMessage = error.message;
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || 'Terjadi kesalahan server' }, 
+      { status: 401 } 
+    );
   }
 }
